@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -10,6 +11,15 @@ import (
 	"github.com/guitmz/n26"
 	"github.com/joho/godotenv"
 )
+
+type filteredTransaction struct {
+	ID           string    `json:"id"`
+	VisibleTS    time.Time `json:"visibleTS"`
+	Payee        string    `json:"payee"`
+	Amount       float64   `json:"amount"`
+	CurrencyCode string    `json:"currencyCode"`
+	Category     string    `json:"category"`
+}
 
 func main() {
 	err := godotenv.Load()
@@ -46,5 +56,34 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(transactions)
+
+	filteredTransactions := []filteredTransaction{}
+
+	for _, transaction := range *transactions {
+		currTransaction := filteredTransaction{
+			ID:           transaction.ID,
+			VisibleTS:    transaction.VisibleTS.Time,
+			Amount:       transaction.Amount,
+			CurrencyCode: transaction.CurrencyCode,
+		}
+
+		// If the transaction was from a friend
+		if transaction.PartnerIban != "" {
+			currTransaction.Payee = transaction.PartnerName
+			currTransaction.Category = "friends"
+		} else {
+			// or from a business
+			currTransaction.Payee = transaction.MerchantName
+			currTransaction.Category = transaction.Category
+		}
+		filteredTransactions = append(filteredTransactions, currTransaction)
+
+	}
+
+	jsonString, err := json.MarshalIndent(filteredTransactions, "", "\t")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(string(jsonString))
 }
