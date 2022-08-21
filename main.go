@@ -64,7 +64,7 @@ func main() {
 			ID:           transaction.ID,
 			VisibleTS:    transaction.VisibleTS.Time,
 			Amount:       transaction.Amount,
-			CurrencyCode: transaction.CurrencyCode,
+			CurrencyCode: transaction.OriginalCurrency,
 		}
 
 		// If the transaction was from a friend
