@@ -29,7 +29,23 @@ type filteredTransaction struct {
 	Category string  `json:"category"`
 }
 
+func getClient() *n26.Client {
+	fmt.Println("waiting for 2FA confirmation in app")
+	newClient, err := n26.NewClient(n26.Auth{
+		UserName:    os.Getenv("USERNAME"),
+		Password:    os.Getenv("PASSWORD"),
+		DeviceToken: os.Getenv("DEVICE_TOKEN"),
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("auth complete")
+	fmt.Println("auth woked")
+	return newClient
+}
+
 func Transactions(w http.ResponseWriter, r *http.Request) {
+	client := getClient()
 	fullDaysToLookupString := r.URL.Query().Get("days")
 	daysToLookup, err := strconv.Atoi(fullDaysToLookupString)
 	if err != nil {
@@ -39,18 +55,6 @@ func Transactions(w http.ResponseWriter, r *http.Request) {
 	endTime := n26.TimeStamp{Time: time.Now()}
 	startTime := n26.TimeStamp{Time: endTime.Time.Add((-time.Hour * 24) * time.Duration(daysToLookup))}
 
-	fmt.Println("waiting for 2FA confirmation in app")
-	client, err := n26.NewClient(n26.Auth{
-		UserName:    os.Getenv("USERNAME"),
-		Password:    os.Getenv("PASSWORD"),
-		DeviceToken: os.Getenv("DEVICE_TOKEN"),
-	})
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("auth complete")
-
-	fmt.Println("auth woked")
 	transactions, err := client.GetTransactions(startTime, endTime, fmt.Sprint(daysToLookup))
 	if err != nil {
 		panic(err)
@@ -127,7 +131,9 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 		ReadTimeout:  10 * time.Second,
 	}
+
 	fmt.Println("serving requests on :" + port)
+
 	log.Fatal(srv.ListenAndServe())
 
 }
