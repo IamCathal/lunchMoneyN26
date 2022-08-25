@@ -4,41 +4,40 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/guitmz/n26"
 	"github.com/joho/godotenv"
 )
 
-type filteredTransaction struct {
-	ID           string    `json:"id"`
-	VisibleTS    time.Time `json:"visibleTS"`
-	Payee        string    `json:"payee"`
-	Amount       float64   `json:"amount"`
-	CurrencyCode string    `json:"currencyCode"`
-	Category     string    `json:"category"`
+// UptimeResponse is the standard response
+// for any service's /status endpoint
+type UptimeResponse struct {
+	Status string `json:"status"`
 }
 
-func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-	fullDaysToLookup := 0
+type filteredTransaction struct {
+	ID       string  `json:"id"`
+	Date     string  `json:"date"`
+	Payee    string  `json:"payee"`
+	Amount   float64 `json:"amount"`
+	Currency string  `json:"currency"`
+	Category string  `json:"category"`
+}
 
-	cliArgs := os.Args[1:]
-	if len(cliArgs) == 1 {
-		days, err := strconv.ParseInt(cliArgs[0], 10, 32)
-		if err != nil {
-			panic("duhhh")
-		}
-		fullDaysToLookup = int(days)
+func Transactions(w http.ResponseWriter, r *http.Request) {
+	fullDaysToLookupString := r.URL.Query().Get("days")
+	daysToLookup, err := strconv.Atoi(fullDaysToLookupString)
+	if err != nil {
+		panic(err)
 	}
 
 	endTime := n26.TimeStamp{Time: time.Now()}
-	startTime := n26.TimeStamp{Time: endTime.Time.Add((-time.Hour * 24) * time.Duration(fullDaysToLookup))}
+	startTime := n26.TimeStamp{Time: endTime.Time.Add((-time.Hour * 24) * time.Duration(daysToLookup))}
 
 	fmt.Println("waiting for 2FA confirmation in app")
 	client, err := n26.NewClient(n26.Auth{
@@ -52,7 +51,7 @@ func main() {
 	fmt.Println("auth complete")
 
 	fmt.Println("auth woked")
-	transactions, err := client.GetTransactions(startTime, endTime, "12")
+	transactions, err := client.GetTransactions(startTime, endTime, fmt.Sprint(daysToLookup))
 	if err != nil {
 		panic(err)
 	}
@@ -77,7 +76,6 @@ func main() {
 			currTransaction.Category = transaction.Category
 		}
 		filteredTransactions = append(filteredTransactions, currTransaction)
-
 	}
 
 	jsonString, err := json.MarshalIndent(filteredTransactions, "", "\t")
@@ -85,5 +83,51 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println(string(jsonString))
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, string(jsonString))
+}
+
+func Status(w http.ResponseWriter, r *http.Request) {
+	req := UptimeResponse{
+		Status: "operational",
+	}
+	jsonObj, err := json.MarshalIndent(req, "", "\t")
+	if err != nil {
+		log.Fatal(err)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, string(jsonObj))
+}
+
+func logMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("%v %+v\n", time.Now().Format(time.RFC3339), r)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	port := "2944"
+
+	r := mux.NewRouter()
+	r.HandleFunc("/status", Status).Methods("POST")
+	r.HandleFunc("/anycans", Transactions).Methods("POST")
+	r.Use(logMiddleware)
+
+	srv := &http.Server{
+		Handler:      r,
+		Addr:         ":" + fmt.Sprint(2944),
+		WriteTimeout: 10 * time.Second,
+		ReadTimeout:  10 * time.Second,
+	}
+	fmt.Println("serving requests on :" + port)
+	log.Fatal(srv.ListenAndServe())
+
 }
