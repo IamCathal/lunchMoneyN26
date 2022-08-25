@@ -61,10 +61,10 @@ func main() {
 
 	for _, transaction := range *transactions {
 		currTransaction := filteredTransaction{
-			ID:           transaction.ID,
-			VisibleTS:    transaction.VisibleTS.Time,
-			Amount:       transaction.Amount,
-			CurrencyCode: transaction.OriginalCurrency,
+			ID:       transaction.ID,
+			Date:     transaction.VisibleTS.Time.Format(time.RFC3339),
+			Amount:   transaction.Amount,
+			Currency: transaction.OriginalCurrency,
 		}
 
 		// If the transaction was from a friend
