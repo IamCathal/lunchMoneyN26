@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -18,6 +21,13 @@ import (
 // for any service's /status endpoint
 type UptimeResponse struct {
 	Status string `json:"status"`
+}
+
+type uploadTransactionsDTO struct {
+	Transactions      []filteredTransaction `json:"transactions"`
+	ApplyRules        bool                  `json:"apply_rules"`
+	SkipDuplicates    bool                  `json:"skip_duplicates"`
+	CheckForRecurring bool                  `json:"check_for_recurring"`
 }
 
 type filteredTransaction struct {
@@ -67,7 +77,7 @@ func Transactions(w http.ResponseWriter, r *http.Request) {
 			ID:       transaction.ID,
 			Date:     transaction.VisibleTS.Time.Format(time.RFC3339),
 			Amount:   transaction.Amount,
-			Currency: transaction.OriginalCurrency,
+			Currency: strings.ToLower(transaction.OriginalCurrency),
 		}
 
 		// If the transaction was from a friend
@@ -86,6 +96,8 @@ func Transactions(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+
+	uploadTransactions(uploadTransactionsDTO{filteredTransactions, true, true, true})
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -110,6 +122,34 @@ func logMiddleware(next http.Handler) http.Handler {
 		fmt.Printf("%v %+v\n", time.Now().Format(time.RFC3339), r)
 		next.ServeHTTP(w, r)
 	})
+}
+
+func uploadTransactions(transactions uploadTransactionsDTO) {
+	jsonObj, err := json.Marshal(transactions)
+	if err != nil {
+		panic(err)
+	}
+
+	req, err := http.NewRequest("POST", "https://dev.lunchmoney.app/v1/transactions", bytes.NewBuffer(jsonObj))
+	if err != nil {
+		panic(err)
+	}
+	req.Close = true
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("LUNCHMONEY_TOKEN")))
+
+	client := &http.Client{}
+
+	res, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("=====\n%v\n======\n", string(body))
 }
 
 func main() {
