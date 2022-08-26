@@ -17,34 +17,16 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// UptimeResponse is the standard response
-// for any service's /status endpoint
-type UptimeResponse struct {
-	Status string `json:"status"`
-}
-
-type uploadTransactionsDTO struct {
-	Transactions      []filteredTransaction `json:"transactions"`
-	ApplyRules        bool                  `json:"apply_rules"`
-	SkipDuplicates    bool                  `json:"skip_duplicates"`
-	CheckForRecurring bool                  `json:"check_for_recurring"`
-}
-
-type filteredTransaction struct {
-	ID       string  `json:"id"`
-	Date     string  `json:"date"`
-	Payee    string  `json:"payee"`
-	Amount   float64 `json:"amount"`
-	Currency string  `json:"currency"`
-	Category string  `json:"category"`
-}
+var (
+	config appConfig
+)
 
 func getClient() *n26.Client {
 	fmt.Println("waiting for 2FA confirmation in app")
 	newClient, err := n26.NewClient(n26.Auth{
-		UserName:    os.Getenv("USERNAME"),
-		Password:    os.Getenv("PASSWORD"),
-		DeviceToken: os.Getenv("DEVICE_TOKEN"),
+		UserName:    config.n26Username,
+		Password:    config.n26Password,
+		DeviceToken: config.n26DeviceToken,
 	})
 	if err != nil {
 		panic(err)
@@ -56,6 +38,7 @@ func getClient() *n26.Client {
 
 func Transactions(w http.ResponseWriter, r *http.Request) {
 	client := getClient()
+
 	fullDaysToLookupString := r.URL.Query().Get("days")
 	daysToLookup, err := strconv.Atoi(fullDaysToLookupString)
 	if err != nil {
@@ -71,7 +54,6 @@ func Transactions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	filteredTransactions := []filteredTransaction{}
-
 	for _, transaction := range *transactions {
 		currTransaction := filteredTransaction{
 			ID:       transaction.ID,
@@ -104,26 +86,6 @@ func Transactions(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, string(jsonString))
 }
 
-func Status(w http.ResponseWriter, r *http.Request) {
-	req := UptimeResponse{
-		Status: "operational",
-	}
-	jsonObj, err := json.MarshalIndent(req, "", "\t")
-	if err != nil {
-		log.Fatal(err)
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, string(jsonObj))
-}
-
-func logMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("%v %+v\n", time.Now().Format(time.RFC3339), r)
-		next.ServeHTTP(w, r)
-	})
-}
-
 func uploadTransactions(transactions uploadTransactionsDTO) {
 	jsonObj, err := json.Marshal(transactions)
 	if err != nil {
@@ -134,12 +96,9 @@ func uploadTransactions(transactions uploadTransactionsDTO) {
 	if err != nil {
 		panic(err)
 	}
-	req.Close = true
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("LUNCHMONEY_TOKEN")))
-
 	client := &http.Client{}
-
 	res, err := client.Do(req)
 	if err != nil {
 		panic(err)
@@ -148,17 +107,33 @@ func uploadTransactions(transactions uploadTransactionsDTO) {
 	if err != nil {
 		panic(err)
 	}
-
 	fmt.Printf("=====\n%v\n======\n", string(body))
 }
 
-func main() {
+func initConfig() appConfig {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
+	appConfig := appConfig{
+		port:            2944,
+		n26Username:     os.Getenv("N26_USERNAME"),
+		n26Password:     os.Getenv("N26_PASSWORD"),
+		n26DeviceToken:  os.Getenv("N26_DEVICE_TOKEN"),
+		lunchMoneyToken: os.Getenv("LUNCHMONEY_TOKEN"),
+	}
+	if os.Getenv("API_PORT") != "" {
+		intAPIPort, err := strconv.Atoi(os.Getenv("API_PORT"))
+		if err != nil {
+			panic(err)
+		}
+		appConfig.port = intAPIPort
+	}
+	return appConfig
+}
 
-	port := "2944"
+func main() {
+	config = initConfig()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/status", Status).Methods("POST")
@@ -167,13 +142,11 @@ func main() {
 
 	srv := &http.Server{
 		Handler:      r,
-		Addr:         ":" + fmt.Sprint(2944),
+		Addr:         ":" + fmt.Sprint(config.port),
 		WriteTimeout: 10 * time.Second,
 		ReadTimeout:  10 * time.Second,
 	}
 
-	fmt.Println("serving requests on :" + port)
-
+	fmt.Printf("serving requests on :%d\n", config.port)
 	log.Fatal(srv.ListenAndServe())
-
 }
