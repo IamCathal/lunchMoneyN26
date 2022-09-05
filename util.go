@@ -19,7 +19,7 @@ func Status(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, string(jsonObj))
+	json.NewEncoder(w).Encode(string(jsonObj))
 }
 
 func logMiddleware(next http.Handler) http.Handler {
@@ -27,6 +27,28 @@ func logMiddleware(next http.Handler) http.Handler {
 		fmt.Printf("%v %+v\n", time.Now().Format(time.RFC3339), r)
 		next.ServeHTTP(w, r)
 	})
+}
+
+func ensureAllEnvVarsAreSet() {
+	requiredEnvVars := []string{
+		"N26_USERNAME",
+		"N26_PASSWORD",
+		"N26_DEVICE_TOKEN",
+		"LUNCHMONEY_TOKEN",
+	}
+
+	for _, envVar := range requiredEnvVars {
+		if isSet := envVarIsSet(envVar); !isSet {
+			panic(fmt.Sprint("env var " + envVar + " is not set"))
+		}
+	}
+}
+
+func getEnvVarOrDefault(varName, defaultVal string) string {
+	if isSet := envVarIsSet(varName); isSet {
+		return os.Getenv(varName)
+	}
+	return defaultVal
 }
 
 func envVarIsSet(varName string) bool {

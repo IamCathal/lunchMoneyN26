@@ -32,7 +32,6 @@ func getClient() *n26.Client {
 		panic(err)
 	}
 	fmt.Println("auth complete")
-	fmt.Println("auth woked")
 	return newClient
 }
 
@@ -83,7 +82,7 @@ func Transactions(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, string(jsonString))
+	json.NewEncoder(w).Encode(string(jsonString))
 }
 
 func uploadTransactions(transactions uploadTransactionsDTO) {
@@ -115,6 +114,9 @@ func initConfig() appConfig {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
+
+	ensureAllEnvVarsAreSet()
+
 	appConfig := appConfig{
 		port:            2944,
 		n26Username:     os.Getenv("N26_USERNAME"),
@@ -147,6 +149,6 @@ func main() {
 		ReadTimeout:  10 * time.Second,
 	}
 
-	fmt.Printf("serving requests on :%d\n", config.port)
+	fmt.Printf("Serving requests on :%d\n", config.port)
 	log.Fatal(srv.ListenAndServe())
 }
