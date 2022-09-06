@@ -101,21 +101,21 @@ func initConfig(args []string) {
 	}
 
 	webServer := flag.Bool("webserver", false, "Run the application as a webserver")
-	days := flag.Int("d", 1, "How many days of transactions should be queried (if not in webserver mode)")
+	days := flag.Int("d", 1, "Search for the last n days for any transactions (if not in webserver mode)")
 	flag.Parse()
 
-	if *webServer == true {
+	if *webServer {
 		appConfig.webServer = true
+	} else {
 		appConfig.days = *days
 	}
-
 	config = appConfig
 }
 
 func runWebServer() {
 	r := mux.NewRouter()
 	r.HandleFunc("/status", Status).Methods("POST")
-	r.HandleFunc("/anycans", Transactions).Methods("POST")
+	r.HandleFunc("/transcations", Transactions).Methods("POST")
 	r.Use(logMiddleware)
 
 	srv := &http.Server{
