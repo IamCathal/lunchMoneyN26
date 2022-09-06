@@ -1,8 +1,8 @@
 package main
 
 type appConfig struct {
-	offlineMode bool
-	port        int
+	webServer bool
+	port      int
 
 	n26Username     string
 	n26Password     string

@@ -74,7 +74,7 @@ func uploadTransactions(transactions uploadTransactionsDTO) {
 	fmt.Printf("=====\n%v\n======\n", string(body))
 }
 
-func initConfig(args []string) appConfig {
+func initConfig(args []string) {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -83,7 +83,7 @@ func initConfig(args []string) appConfig {
 	ensureAllEnvVarsAreSet()
 
 	appConfig := appConfig{
-		offlineMode:     false,
+		webServer:       false,
 		port:            2944,
 		n26Username:     os.Getenv("N26_USERNAME"),
 		n26Password:     os.Getenv("N26_PASSWORD"),
@@ -100,19 +100,19 @@ func initConfig(args []string) appConfig {
 		appConfig.port = intAPIPort
 	}
 
-	offlineMode := flag.Bool("offline", false, "use the application not as a webserver")
-	days := flag.Int("d", 1, "how many days of transactions should be queried")
+	webServer := flag.Bool("webserver", false, "Run the application as a webserver")
+	days := flag.Int("d", 1, "How many days of transactions should be queried (if not in webserver mode)")
 	flag.Parse()
 
-	if *offlineMode == true {
-		appConfig.offlineMode = true
+	if *webServer == true {
+		appConfig.webServer = true
 		appConfig.days = *days
 	}
 
-	return appConfig
+	config = appConfig
 }
 
-func runWebServer(config appConfig) {
+func runWebServer() {
 	r := mux.NewRouter()
 	r.HandleFunc("/status", Status).Methods("POST")
 	r.HandleFunc("/anycans", Transactions).Methods("POST")
@@ -130,10 +130,10 @@ func runWebServer(config appConfig) {
 }
 
 func main() {
-	config = initConfig(os.Args[1:])
+	initConfig(os.Args[1:])
 
-	if !config.offlineMode {
-		runWebServer(config)
+	if config.webServer {
+		runWebServer()
 		return
 	}
 
