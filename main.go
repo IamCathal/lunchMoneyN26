@@ -100,12 +100,12 @@ func initConfig(args []string) appConfig {
 		appConfig.port = intAPIPort
 	}
 
-	offlineMode := flag.Bool("x", false, "use the application not as a webserver")
+	offlineMode := flag.Bool("offline", false, "use the application not as a webserver")
 	days := flag.Int("d", 1, "how many days of transactions should be queried")
 	flag.Parse()
 
-	if *offlineMode {
-		config.offlineMode = true
+	if *offlineMode == true {
+		appConfig.offlineMode = true
 		appConfig.days = *days
 	}
 
