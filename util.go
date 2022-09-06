@@ -6,8 +6,45 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
+
+	"github.com/guitmz/n26"
 )
+
+func getAndFilterTransactions(daysToLookup int) []filteredTransaction {
+	client := getClient()
+
+	endTime := n26.TimeStamp{Time: time.Now()}
+	startTime := n26.TimeStamp{Time: endTime.Time.Add((-time.Hour * 24) * time.Duration(daysToLookup))}
+
+	transactions, err := client.GetTransactions(startTime, endTime, fmt.Sprint(daysToLookup))
+	if err != nil {
+		panic(err)
+	}
+
+	filteredTransactions := []filteredTransaction{}
+	for _, transaction := range *transactions {
+		currTransaction := filteredTransaction{
+			ID:       transaction.ID,
+			Date:     transaction.VisibleTS.Time.Format(time.RFC3339),
+			Amount:   transaction.Amount,
+			Currency: strings.ToLower(transaction.OriginalCurrency),
+		}
+
+		// If the transaction was from a friend
+		if transaction.PartnerIban != "" {
+			currTransaction.Payee = transaction.PartnerName
+			currTransaction.Category = "friends"
+		} else {
+			// or from a business
+			currTransaction.Payee = transaction.MerchantName
+			currTransaction.Category = transaction.Category
+		}
+		filteredTransactions = append(filteredTransactions, currTransaction)
+	}
+	return filteredTransactions
+}
 
 func Status(w http.ResponseWriter, r *http.Request) {
 	req := uptimeResponse{

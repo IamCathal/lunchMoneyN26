@@ -3,13 +3,13 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -36,53 +36,18 @@ func getClient() *n26.Client {
 }
 
 func Transactions(w http.ResponseWriter, r *http.Request) {
-	client := getClient()
-
 	fullDaysToLookupString := r.URL.Query().Get("days")
 	daysToLookup, err := strconv.Atoi(fullDaysToLookupString)
 	if err != nil {
 		panic(err)
 	}
 
-	endTime := n26.TimeStamp{Time: time.Now()}
-	startTime := n26.TimeStamp{Time: endTime.Time.Add((-time.Hour * 24) * time.Duration(daysToLookup))}
-
-	transactions, err := client.GetTransactions(startTime, endTime, fmt.Sprint(daysToLookup))
-	if err != nil {
-		panic(err)
-	}
-
-	filteredTransactions := []filteredTransaction{}
-	for _, transaction := range *transactions {
-		currTransaction := filteredTransaction{
-			ID:       transaction.ID,
-			Date:     transaction.VisibleTS.Time.Format(time.RFC3339),
-			Amount:   transaction.Amount,
-			Currency: strings.ToLower(transaction.OriginalCurrency),
-		}
-
-		// If the transaction was from a friend
-		if transaction.PartnerIban != "" {
-			currTransaction.Payee = transaction.PartnerName
-			currTransaction.Category = "friends"
-		} else {
-			// or from a business
-			currTransaction.Payee = transaction.MerchantName
-			currTransaction.Category = transaction.Category
-		}
-		filteredTransactions = append(filteredTransactions, currTransaction)
-	}
-
-	jsonString, err := json.MarshalIndent(filteredTransactions, "", "\t")
-	if err != nil {
-		panic(err)
-	}
-
-	uploadTransactions(uploadTransactionsDTO{filteredTransactions, true, true, true})
+	transactions := getAndFilterTransactions(daysToLookup)
+	uploadTransactions(uploadTransactionsDTO{transactions, true, true, true})
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(string(jsonString))
+	json.NewEncoder(w).Encode(transactions)
 }
 
 func uploadTransactions(transactions uploadTransactionsDTO) {
@@ -109,7 +74,7 @@ func uploadTransactions(transactions uploadTransactionsDTO) {
 	fmt.Printf("=====\n%v\n======\n", string(body))
 }
 
-func initConfig() appConfig {
+func initConfig(args []string) appConfig {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -118,11 +83,14 @@ func initConfig() appConfig {
 	ensureAllEnvVarsAreSet()
 
 	appConfig := appConfig{
+		offlineMode:     false,
 		port:            2944,
 		n26Username:     os.Getenv("N26_USERNAME"),
 		n26Password:     os.Getenv("N26_PASSWORD"),
 		n26DeviceToken:  os.Getenv("N26_DEVICE_TOKEN"),
 		lunchMoneyToken: os.Getenv("LUNCHMONEY_TOKEN"),
+
+		days: 0,
 	}
 	if os.Getenv("API_PORT") != "" {
 		intAPIPort, err := strconv.Atoi(os.Getenv("API_PORT"))
@@ -131,12 +99,20 @@ func initConfig() appConfig {
 		}
 		appConfig.port = intAPIPort
 	}
+
+	offlineMode := flag.Bool("x", false, "use the application not as a webserver")
+	days := flag.Int("d", 1, "how many days of transactions should be queried")
+	flag.Parse()
+
+	if *offlineMode {
+		config.offlineMode = true
+		appConfig.days = *days
+	}
+
 	return appConfig
 }
 
-func main() {
-	config = initConfig()
-
+func runWebServer(config appConfig) {
 	r := mux.NewRouter()
 	r.HandleFunc("/status", Status).Methods("POST")
 	r.HandleFunc("/anycans", Transactions).Methods("POST")
@@ -151,4 +127,16 @@ func main() {
 
 	fmt.Printf("Serving requests on :%d\n", config.port)
 	log.Fatal(srv.ListenAndServe())
+}
+
+func main() {
+	config = initConfig(os.Args[1:])
+
+	if !config.offlineMode {
+		runWebServer(config)
+		return
+	}
+
+	transactions := getAndFilterTransactions(config.days)
+	uploadTransactions(uploadTransactionsDTO{transactions, true, true, true})
 }
