@@ -21,6 +21,40 @@ var (
 	config appConfig
 )
 
+func getClientWithProgressOutput() *n26.Client {
+	authenticatedInApp := false
+	waitTimeRemaining := 600
+
+	go func() {
+		for {
+			if authenticatedInApp {
+				break
+			}
+			if waitTimeRemaining == 0 {
+				fmt.Println("Maximum allowed wait time of 5m exceeded")
+				os.Exit(1)
+			}
+
+			fmt.Printf("\r2FA Confirmation required in your N26 app within the next: %v", getMinutesAndSecondsLeft(waitTimeRemaining))
+			time.Sleep(1 * time.Second)
+			waitTimeRemaining -= 1
+		}
+	}()
+
+	newClient, err := n26.NewClient(n26.Auth{
+		UserName:    config.n26Username,
+		Password:    config.n26Password,
+		DeviceToken: config.n26DeviceToken,
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("\nYou've successfully authenticated")
+	authenticatedInApp = true
+
+	return newClient
+}
+
 func getClient() *n26.Client {
 	fmt.Println("waiting for 2FA confirmation in app")
 	newClient, err := n26.NewClient(n26.Auth{
@@ -42,7 +76,8 @@ func Transactions(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	transactions := getAndFilterTransactions(daysToLookup)
+	client := getClient()
+	transactions := getAndFilterTransactions(client, daysToLookup)
 	uploadTransactions(uploadTransactionsDTO{transactions, true, true, true})
 
 	w.Header().Set("Content-Type", "application/json")
@@ -137,6 +172,7 @@ func main() {
 		return
 	}
 
-	transactions := getAndFilterTransactions(config.days)
+	client := getClientWithProgressOutput()
+	transactions := getAndFilterTransactions(client, config.days)
 	uploadTransactions(uploadTransactionsDTO{transactions, true, true, true})
 }
