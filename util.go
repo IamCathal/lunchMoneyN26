@@ -12,9 +12,7 @@ import (
 	"github.com/guitmz/n26"
 )
 
-func getAndFilterTransactions(daysToLookup int) []filteredTransaction {
-	client := getClient()
-
+func getAndFilterTransactions(client *n26.Client, daysToLookup int) []filteredTransaction {
 	endTime := n26.TimeStamp{Time: time.Now()}
 	startTime := n26.TimeStamp{Time: endTime.Time.Add((-time.Hour * 24) * time.Duration(daysToLookup))}
 
@@ -93,4 +91,20 @@ func envVarIsSet(varName string) bool {
 		return true
 	}
 	return false
+}
+
+func getMinutesAndSecondsLeft(totalSeconds int) string {
+	totalMinutesLeft, secondsLeftRemainder := divmod(totalSeconds, 60)
+
+	if totalMinutesLeft != 0 {
+		return fmt.Sprintf("%dm %ds", totalMinutesLeft, secondsLeftRemainder)
+	} else {
+		return fmt.Sprintf("%ds", secondsLeftRemainder)
+	}
+}
+
+func divmod(big, little int) (int, int) {
+	quotient := big / little
+	remainder := big % little
+	return quotient, remainder
 }
