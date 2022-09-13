@@ -3,19 +3,17 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/guitmz/n26"
-	"github.com/joho/godotenv"
 )
 
 var (
@@ -26,94 +24,36 @@ var (
 	config appConfig
 )
 
-func getClientWithProgressOutput() *n26.Client {
-	authenticatedInApp := false
-	waitTimeRemaining := 300
+func getAndFilterTransactions(client *n26.Client, daysToLookup int) []filteredTransaction {
+	endTime := n26.TimeStamp{Time: time.Now()}
+	startTime := n26.TimeStamp{Time: endTime.Time.Add((-time.Hour * 24) * time.Duration(daysToLookup))}
 
-	go func() {
-		for {
-			if authenticatedInApp {
-				break
-			}
-			if waitTimeRemaining == 0 {
-				fmt.Println("Maximum allowed wait time of 5m exceeded")
-				os.Exit(1)
-			}
+	transactions, err := client.GetTransactions(startTime, endTime, fmt.Sprint(daysToLookup))
+	if err != nil {
+		panic(err)
+	}
 
-			fmt.Printf("\r2FA Confirmation required in your N26 app within the next: %v", getMinutesAndSecondsLeft(waitTimeRemaining))
-			time.Sleep(1 * time.Second)
-			waitTimeRemaining -= 1
+	filteredTransactions := []filteredTransaction{}
+	for _, transaction := range *transactions {
+		currTransaction := filteredTransaction{
+			ID:       transaction.ID,
+			Date:     transaction.VisibleTS.Time.Format(time.RFC3339),
+			Amount:   transaction.Amount,
+			Currency: strings.ToLower(transaction.OriginalCurrency),
 		}
-	}()
 
-	newClient, err := n26.NewClient(n26.Auth{
-		UserName:    config.n26Username,
-		Password:    config.n26Password,
-		DeviceToken: config.n26DeviceToken,
-	})
-	if err != nil {
-		panic(err)
+		// If the transaction was from a friend
+		if transaction.PartnerIban != "" {
+			currTransaction.Payee = transaction.PartnerName
+			currTransaction.Category = "friends"
+		} else {
+			// or from a business
+			currTransaction.Payee = transaction.MerchantName
+			currTransaction.Category = transaction.Category
+		}
+		filteredTransactions = append(filteredTransactions, currTransaction)
 	}
-	fmt.Println("\nYou've successfully authenticated")
-	authenticatedInApp = true
-
-	return newClient
-}
-
-func getClient() *n26.Client {
-	fmt.Println("waiting for 2FA confirmation in app")
-	newClient, err := n26.NewClient(n26.Auth{
-		UserName:    config.n26Username,
-		Password:    config.n26Password,
-		DeviceToken: config.n26DeviceToken,
-	})
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("auth complete")
-	return newClient
-}
-
-func Transactions(w http.ResponseWriter, r *http.Request) {
-	fullDaysToLookupString := r.URL.Query().Get("days")
-	daysToLookup, err := strconv.Atoi(fullDaysToLookupString)
-	if err != nil {
-		panic(err)
-	}
-
-	client := getClient()
-	transactions := getAndFilterTransactions(client, daysToLookup)
-	uploadTransactions(uploadTransactionsDTO{transactions, true, true, true})
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(transactions)
-}
-
-func wsTransactions(w http.ResponseWriter, r *http.Request) {
-	ws := setupWebSocket(w, r)
-	if ws == nil {
-		SendBasicInvalidResponse(w, r, "unable to upgrade websocket", http.StatusBadRequest)
-		return
-	}
-	fullDaysToLookupString := r.URL.Query().Get("days")
-	daysToLookup, err := strconv.Atoi(fullDaysToLookupString)
-	if err != nil {
-		panic(err)
-	}
-
-	writeMessageToWs("Waiting for N26 2FA authorization", ws)
-	client := getClient()
-	writeMessageToWs("N26 has been authorized", ws)
-
-	writeMessageToWs("Retrieving transactions from N26", ws)
-	transactions := getAndFilterTransactions(client, daysToLookup)
-
-	writeMessageToWs("Uploading transactions to LunchMoney", ws)
-	uploadTransactions(uploadTransactionsDTO{transactions, true, true, true})
-	writeMessageToWs("Transactions uploaded", ws)
-
-	ws.Close()
+	return filteredTransactions
 }
 
 func uploadTransactions(transactions uploadTransactionsDTO) {
@@ -143,44 +83,6 @@ func uploadTransactions(transactions uploadTransactionsDTO) {
 		panic(err)
 	}
 	fmt.Printf("Inserted %d new transactions into LunchMoney\n", len(transactionIDs.IDs))
-}
-
-func initConfig(args []string) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
-	ensureAllEnvVarsAreSet()
-
-	appConfig := appConfig{
-		webServer:       false,
-		port:            2944,
-		n26Username:     os.Getenv("N26_USERNAME"),
-		n26Password:     os.Getenv("N26_PASSWORD"),
-		n26DeviceToken:  os.Getenv("N26_DEVICE_TOKEN"),
-		lunchMoneyToken: os.Getenv("LUNCHMONEY_TOKEN"),
-
-		days: 0,
-	}
-	if os.Getenv("API_PORT") != "" {
-		intAPIPort, err := strconv.Atoi(os.Getenv("API_PORT"))
-		if err != nil {
-			panic(err)
-		}
-		appConfig.port = intAPIPort
-	}
-
-	webServer := flag.Bool("webserver", false, "Run the application as a webserver")
-	days := flag.Int("d", 1, "Search for the last n days for any transactions (if not in webserver mode)")
-	flag.Parse()
-
-	if *webServer {
-		appConfig.webServer = true
-	} else {
-		appConfig.days = *days
-	}
-	config = appConfig
 }
 
 func runWebServer() {

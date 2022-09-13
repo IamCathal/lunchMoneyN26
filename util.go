@@ -3,59 +3,60 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/guitmz/n26"
 )
 
-func getAndFilterTransactions(client *n26.Client, daysToLookup int) []filteredTransaction {
-	endTime := n26.TimeStamp{Time: time.Now()}
-	startTime := n26.TimeStamp{Time: endTime.Time.Add((-time.Hour * 24) * time.Duration(daysToLookup))}
+func getClientWithProgressOutput() *n26.Client {
+	authenticatedInApp := false
+	waitTimeRemaining := 300
 
-	transactions, err := client.GetTransactions(startTime, endTime, fmt.Sprint(daysToLookup))
+	go func() {
+		for {
+			if authenticatedInApp {
+				break
+			}
+			if waitTimeRemaining == 0 {
+				fmt.Println("Maximum allowed wait time of 5m exceeded")
+				os.Exit(1)
+			}
+
+			fmt.Printf("\r2FA Confirmation required in your N26 app within the next: %v", getMinutesAndSecondsLeft(waitTimeRemaining))
+			time.Sleep(1 * time.Second)
+			waitTimeRemaining -= 1
+		}
+	}()
+
+	newClient, err := n26.NewClient(n26.Auth{
+		UserName:    config.n26Username,
+		Password:    config.n26Password,
+		DeviceToken: config.n26DeviceToken,
+	})
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("\nYou've successfully authenticated")
+	authenticatedInApp = true
 
-	filteredTransactions := []filteredTransaction{}
-	for _, transaction := range *transactions {
-		currTransaction := filteredTransaction{
-			ID:       transaction.ID,
-			Date:     transaction.VisibleTS.Time.Format(time.RFC3339),
-			Amount:   transaction.Amount,
-			Currency: strings.ToLower(transaction.OriginalCurrency),
-		}
-
-		// If the transaction was from a friend
-		if transaction.PartnerIban != "" {
-			currTransaction.Payee = transaction.PartnerName
-			currTransaction.Category = "friends"
-		} else {
-			// or from a business
-			currTransaction.Payee = transaction.MerchantName
-			currTransaction.Category = transaction.Category
-		}
-		filteredTransactions = append(filteredTransactions, currTransaction)
-	}
-	return filteredTransactions
+	return newClient
 }
 
-func Status(w http.ResponseWriter, r *http.Request) {
-	req := uptimeResponse{
-		Status: "operational",
-	}
-	jsonObj, err := json.MarshalIndent(req, "", "\t")
+func getClient() *n26.Client {
+	fmt.Println("waiting for 2FA confirmation in app")
+	newClient, err := n26.NewClient(n26.Auth{
+		UserName:    config.n26Username,
+		Password:    config.n26Password,
+		DeviceToken: config.n26DeviceToken,
+	})
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(string(jsonObj))
+	fmt.Println("auth complete")
+	return newClient
 }
 
 func setupWebSocket(w http.ResponseWriter, r *http.Request) *websocket.Conn {
