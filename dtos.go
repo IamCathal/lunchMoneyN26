@@ -35,3 +35,7 @@ type filteredTransaction struct {
 	Currency string  `json:"currency"`
 	Category string  `json:"category"`
 }
+
+type lunchMoneyInsertTransactionResponse struct {
+	IDs []int `json:"ids"`
+}

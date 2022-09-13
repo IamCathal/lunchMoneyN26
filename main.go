@@ -23,7 +23,7 @@ var (
 
 func getClientWithProgressOutput() *n26.Client {
 	authenticatedInApp := false
-	waitTimeRemaining := 600
+	waitTimeRemaining := 300
 
 	go func() {
 		for {
@@ -106,7 +106,12 @@ func uploadTransactions(transactions uploadTransactionsDTO) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("=====\n%v\n======\n", string(body))
+	transactionIDs := lunchMoneyInsertTransactionResponse{}
+	err = json.Unmarshal(body, &transactionIDs)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Inserted %d new transactions into LunchMoney\n", len(transactionIDs.IDs))
 }
 
 func initConfig(args []string) {
@@ -150,7 +155,7 @@ func initConfig(args []string) {
 func runWebServer() {
 	r := mux.NewRouter()
 	r.HandleFunc("/status", Status).Methods("POST")
-	r.HandleFunc("/transcations", Transactions).Methods("POST")
+	r.HandleFunc("/transactions", Transactions).Methods("POST")
 	r.Use(logMiddleware)
 
 	srv := &http.Server{
@@ -174,5 +179,14 @@ func main() {
 
 	client := getClientWithProgressOutput()
 	transactions := getAndFilterTransactions(client, config.days)
-	uploadTransactions(uploadTransactionsDTO{transactions, true, true, true})
+	if len(transactions) > 0 {
+		fmt.Printf("Found %d transactions from N26 in the last %d days:\n", config.days, len(transactions))
+		for _, transaction := range transactions {
+			fmt.Printf("\t%s\t%s\n", transaction.Date, transaction.Payee)
+		}
+		uploadTransactions(uploadTransactionsDTO{transactions, true, true, true})
+		return
+	}
+	fmt.Printf("No transactions found within the last %d days\n", config.days)
+
 }
