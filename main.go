@@ -56,7 +56,7 @@ func getAndFilterTransactions(client *n26.Client, daysToLookup int) []filteredTr
 	return filteredTransactions
 }
 
-func uploadTransactions(transactions uploadTransactionsDTO) {
+func uploadTransactions(transactions uploadTransactionsDTO) lunchMoneyInsertTransactionResponse {
 	jsonObj, err := json.Marshal(transactions)
 	if err != nil {
 		panic(err)
@@ -82,7 +82,7 @@ func uploadTransactions(transactions uploadTransactionsDTO) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Inserted %d new transactions into LunchMoney\n", len(transactionIDs.IDs))
+	return transactionIDs
 }
 
 func runWebServer() {
@@ -118,7 +118,8 @@ func main() {
 		for _, transaction := range transactions {
 			fmt.Printf("\t%s\t%s\n", transaction.Date, transaction.Payee)
 		}
-		uploadTransactions(uploadTransactionsDTO{transactions, true, true, true})
+		transactions := uploadTransactions(uploadTransactionsDTO{transactions, true, true, true})
+		fmt.Printf("Inserted %d new transactions into LunchMoney\n", len(transactions.IDs))
 		return
 	}
 	fmt.Printf("No transactions found within the last %d days\n", config.days)

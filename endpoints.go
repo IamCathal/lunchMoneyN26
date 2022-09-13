@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -25,10 +26,11 @@ func wsTransactions(w http.ResponseWriter, r *http.Request) {
 
 	writeMessageToWs("Retrieving transactions from N26", ws)
 	transactions := getAndFilterTransactions(client, daysToLookup)
+	writeMessageToWs(fmt.Sprintf("Retrieved %d transactions from the last %d days from N26", len(transactions), daysToLookup), ws)
 
-	writeMessageToWs("Uploading transactions to LunchMoney", ws)
-	uploadTransactions(uploadTransactionsDTO{transactions, true, true, true})
-	writeMessageToWs("Transactions uploaded", ws)
+	writeMessageToWs(fmt.Sprintf("Uploading %d transactions to LunchMoney", len(transactions)), ws)
+	newTransactions := uploadTransactions(uploadTransactionsDTO{transactions, true, true, true})
+	writeMessageToWs(fmt.Sprintf("%d unique transactions were created in LunchMoney", len(newTransactions.IDs)), ws)
 
 	ws.Close()
 }
