@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func wsTransactions(w http.ResponseWriter, r *http.Request) {
@@ -19,20 +20,25 @@ func wsTransactions(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+	wsSummaryStats := wsTransactionStats{
+		DaysLookedUp: daysToLookup,
+		CurrTime:     time.Now(),
+	}
+	defer wsFinish(ws, &wsSummaryStats)
 
-	writeMessageToWs("Waiting for N26 2FA authorization", ws)
+	wsMsg("Waiting for N26 2FA authorization", ws)
 	client := getClient()
-	writeMessageToWs("N26 has been authorized", ws)
+	wsMsg("N26 has been authorized", ws)
 
-	writeMessageToWs("Retrieving transactions from N26", ws)
+	wsMsg("Retrieving transactions from N26", ws)
 	transactions := getAndFilterTransactions(client, daysToLookup)
-	writeMessageToWs(fmt.Sprintf("Retrieved %d transactions from the last %d days from N26", len(transactions), daysToLookup), ws)
+	wsMsg(fmt.Sprintf("Retrieved %d transactions from the last %d days from N26", len(transactions), daysToLookup), ws)
+	wsSummaryStats.N26FoundTransactions = len(transactions)
 
-	writeMessageToWs(fmt.Sprintf("Uploading %d transactions to LunchMoney", len(transactions)), ws)
+	wsMsg(fmt.Sprintf("Uploading %d transactions to LunchMoney", len(transactions)), ws)
 	newTransactions := uploadTransactions(uploadTransactionsDTO{transactions, true, true, true})
-	writeMessageToWs(fmt.Sprintf("%d unique transactions were created in LunchMoney", len(newTransactions.IDs)), ws)
-
-	ws.Close()
+	wsMsg(fmt.Sprintf("%d unique transactions were created in LunchMoney", len(newTransactions.IDs)), ws)
+	wsSummaryStats.LunchMoneyInsertedTranscations = len(newTransactions.IDs)
 }
 
 func Transactions(w http.ResponseWriter, r *http.Request) {

@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 type appConfig struct {
 	webServer bool
 	port      int
@@ -38,4 +40,17 @@ type filteredTransaction struct {
 
 type lunchMoneyInsertTransactionResponse struct {
 	IDs []int `json:"ids"`
+}
+
+type websocketMessage struct {
+	Msg          string             `json:"msg"`
+	Finished     bool               `json:"finished"`
+	SummaryStats wsTransactionStats `json:"summarystats,omitempty"`
+}
+
+type wsTransactionStats struct {
+	N26FoundTransactions           int       `json:"n26FoundTransactions"`
+	LunchMoneyInsertedTranscations int       `json:"lunchMoneyInseredTransactions"`
+	DaysLookedUp                   int       `json:"daysLookedUp"`
+	CurrTime                       time.Time `json:"currTime"`
 }

@@ -71,11 +71,36 @@ func setupWebSocket(w http.ResponseWriter, r *http.Request) *websocket.Conn {
 	return ws
 }
 
-func writeMessageToWs(msg string, ws *websocket.Conn) {
-	err := ws.WriteMessage(1, []byte(msg))
+func wsMsg(msg string, ws *websocket.Conn) {
+	newWsMsg := websocketMessage{
+		Msg:      msg,
+		Finished: false,
+	}
+	jsonStr, err := json.Marshal(newWsMsg)
 	if err != nil {
 		panic(err)
 	}
+	err = ws.WriteMessage(1, jsonStr)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func wsFinish(ws *websocket.Conn, summaryStats *wsTransactionStats) {
+	newWsMsg := websocketMessage{
+		Msg:          "transaction finished",
+		Finished:     true,
+		SummaryStats: *summaryStats,
+	}
+	jsonStr, err := json.Marshal(newWsMsg)
+	if err != nil {
+		panic(err)
+	}
+	err = ws.WriteMessage(1, jsonStr)
+	if err != nil {
+		panic(err)
+	}
+	ws.Close()
 }
 
 func SendBasicInvalidResponse(w http.ResponseWriter, req *http.Request, msg string, statusCode int) {
