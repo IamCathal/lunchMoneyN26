@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/guitmz/n26"
 )
 
@@ -55,6 +56,35 @@ func Status(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(string(jsonObj))
+}
+
+func setupWebSocket(w http.ResponseWriter, r *http.Request) *websocket.Conn {
+	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		// if _, ok := err.(websocket.HandshakeError); !ok {
+		// 	return nil
+		// }
+		return nil
+	}
+	return ws
+}
+
+func writeMessageToWs(msg string, ws *websocket.Conn) {
+	err := ws.WriteMessage(1, []byte(msg))
+	if err != nil {
+		panic(err)
+	}
+}
+
+func SendBasicInvalidResponse(w http.ResponseWriter, req *http.Request, msg string, statusCode int) {
+	w.WriteHeader(statusCode)
+	response := struct {
+		Error string `json:"error"`
+	}{
+		msg,
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 func logMiddleware(next http.Handler) http.Handler {
