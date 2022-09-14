@@ -7,31 +7,25 @@
 
         <style>
             body {
-                font-family: Verdana, sans-serif
-            }
-
-            td {
-                border: 2px solid purple;
-            }
-            tr {
-                border: 2px solid blue;
+                font-family: Verdana, sans-serif;
+                color: white
             }
         </style>
 
-        <div style="border: 2px solid orange; width: 30vh; padding: 0.5vh">
+        <div style="width: 30vh; padding: 0.5vh; background-color:#141314">
 
-            <div style="border: 2px solid rgb(0, 222, 181); text-align: center">
+            <div style="text-align: center">
                 N26 -> LunchMoney
             </div>
 
-            <div style="border: 2px solid rgb(0, 222, 181); text-align: center; padding: 1vh">
-                <div style="display: inline; border: 2px solid red; padding: 0.2vh 2vh 0.2vh 2vh; border-top-right-radius: 0.9vh; border-bottom-left-radius: 0.9vh;">
+            <div style="text-align: center; padding: 1vh">
+                <div style="display: inline; border: 2px solid white; padding: 0.2vh 2vh 0.2vh 2vh; border-top-right-radius: 0.9vh; border-bottom-left-radius: 0.9vh;">
                     Import Transactions
                 </div>
             </div>
 
-            <div style="border: 2px solid rgb(0, 222, 181); padding: 1vh; padding-top: 0">
-                <div style="border: 2px solid green; text-align: center; margin-bottom: 0.8vh">
+            <div style="padding: 1vh; padding-top: 0">
+                <div style="text-align: center; margin-bottom: 0.8vh">
                     <p style="font-size: 1.2vh ;padding: 0; margin: 0">Recent Imports</p>
                 </div>
                 <div id="transactionBay">
@@ -40,7 +34,7 @@
                 
             </div>
 
-            <div style="border: 2px solid rgb(4, 0, 255); padding-top: 0; padding-bottom: 0;">
+            <div style=" padding-top: 0; padding-bottom: 0;">
                 <div style="display: inline; padding-top: 0.7vh; margin-left: 0.9vh; text-align: right">
                     <p style="display: inline; font-size: 1.2vh ;padding: 0; margin: 0">
                         <img
@@ -157,16 +151,17 @@
                     outputHTML += `
                     <td>
                     </td>
-                    <div style="margin-top: 0.4vh; padding: 0.2vh 2vh 0.2vh 2vh; border: 2px solid black; ${borderRadiuses}">
+                    <div style="margin-top: 0.8vh; padding: 0.2vh 2vh 0.2vh 2vh; border: 1px solid white; ${borderRadiuses}">
                         <table>
                             <tr style="text-align: center; width: 100%; float: center">
                                 <td style="width: 3vh">
                                     <img
                                         src="https://i.imgur.com/vNnbGKp.png"
                                         width="100%"
+                                        style="filter: invert()"
                                     >   
                                 </td>
-                                <td style="width: 25%; text-align: left">
+                                <td style="width: 25%; margin-left: 0.4vh; text-align: left">
                                     ${curr.n26FoundTransactions}
                                 </td>
                                 <td style="width: 20%">
@@ -183,7 +178,7 @@
                             </tr>
                         </table>
                         <div style="text-align: center">
-                            <div style="display: inline; font-size: 1.1vh; border: 2px solid orange">
+                            <div style="display: inline; font-size: 1.1vh">
                                 ${getDaysApartOutputString(dateAtBeginningOfScan, transactionDate)}
                             </div>
                         </div>
