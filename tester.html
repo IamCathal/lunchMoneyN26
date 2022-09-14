@@ -113,15 +113,30 @@
             // };
 
             checkStatus()
+            setInterval(checkStatus, 10000)
             fillInRecentTransactions()
 
             function fillInRecentTransactions() {
+                const swishLeftBorders = `border-top-right-radius: 0.9vh; border-bottom-left-radius: 0.9vh;`;
+                const swishRightBorders = `border-top-left-radius: 0.9vh; border-bottom-right-radius: 0.9vh;`;
+                const borderArr = [
+                    "border-top-right-radius: 0.9vh;", 
+                    "border-bottom-right-radius: 0.9vh;",
+                    "border-top-left-radius: 0.9vh;",
+                    "border-bottom-left-radius: 0.9vh;",
+                ]
                 let outputHTML = "";
                 const transactions = [
                     {
                         "n26FoundTransactions": 4,
                         "lunchMoneyInseredTransactions": 3,
                         "daysLookedUp": 2,
+                        "currTime": 1663182596930
+                    },
+                    {
+                        "n26FoundTransactions": 12,
+                        "lunchMoneyInseredTransactions": 9,
+                        "daysLookedUp": 9,
                         "currTime": 1663182596930
                     }]
 
@@ -130,12 +145,19 @@
                     const transactionDate = new Date(curr.currTime);
                     let dateAtBeginningOfScan = new Date(curr.currTime);
                     dateAtBeginningOfScan = new Date(dateAtBeginningOfScan.setDate(dateAtBeginningOfScan.getDate() - curr.daysLookedUp))
-                    // const dateString = `${date.getDate()} ${monthNames[date.getMonth()]}`
+
+                    let borderRadiuses = "";
+                    for (let k = 0; k < 4; k++) {
+                        const randNum = Math.floor(Math.random() * 2)
+                        if (randNum % 2 == 0) {
+                            borderRadiuses += borderArr[k]
+                        }
+                    } 
 
                     outputHTML += `
                     <td>
                     </td>
-                    <div style="padding: 0.2vh 2vh 0.2vh 2vh; border-top-right-radius: 0.9vh; border-bottom-left-radius: 0.9vh;">
+                    <div style="margin-top: 0.4vh; padding: 0.2vh 2vh 0.2vh 2vh; border: 2px solid black; ${borderRadiuses}">
                         <table>
                             <tr style="text-align: center; width: 100%; float: center">
                                 <td style="width: 3vh">
@@ -181,7 +203,6 @@
             }
 
             function dateString(date) {
-                console.log(date.getDate() + " " + monthNames[date.getMonth()])
                 return date.getDate() + " " + monthNames[date.getMonth()]
             }
 
@@ -213,7 +234,6 @@
             // https://bobbyhadz.com/blog/javascript-convert-milliseconds-to-hours-minutes-seconds
             // I will not write this myself. there is no point
             function convertMsToTime(milliseconds) {
-                console.log(milliseconds)
                 let seconds = Math.floor(milliseconds / 1000);
                 let minutes = Math.floor(seconds / 60);
                 let hours = Math.floor(minutes / 60);
@@ -221,14 +241,9 @@
 
                 seconds = seconds % 60;
                 minutes = minutes % 60;
-
-                // 👇️ If you don't want to roll hours over, e.g. 24 to 00
-                // 👇️ comment (or remove) the line below
-                // commenting next line gets you `24:00:00` instead of `00:00:00`
-                // or `36:15:31` instead of `12:15:31`, etc.
                 hours = hours % 24;
                 days = hours % 24
-                console.log(days, hours, minutes, seconds)
+
                 if (days >= 1) {
                     return `${days}d ${hours}h`;
                 }
@@ -246,33 +261,3 @@
         </script>
     </body>
 </html>
-
-<!-- <div style="text-align: left;">
-    <div style="display: inline">
-        <img
-            src="https://i.imgur.com/vNnbGKp.png"
-            width="14%"
-        >
-    </div>
-    <div style="display: inline; padding-left: 0.7vh">
-        ${curr.n26FoundTransactions}
-    </div>
-</div>
-
-<div style="text-align: right">
-    <div style="display: inline">
-        ${curr.lunchMoneyInseredTransactions}
-    </div>
-    <div style="display: inline; border: 2px solid black">
-        <img
-            src="https://i.imgur.com/aD0grat.png"
-            width="7%"
-        >
-    </div>
-  
-</div>
-<div style="text-align: center">
-    <div style="display: inline; font-size: 1.1vh; border: 2px solid orange">
-        ${getDaysApartOutputString(dateAtBeginningOfScan, transactionDate)}
-    </div>
-</div> -->
