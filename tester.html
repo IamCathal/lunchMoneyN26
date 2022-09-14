@@ -177,6 +177,7 @@
                 let seconds = Math.floor(milliseconds / 1000);
                 let minutes = Math.floor(seconds / 60);
                 let hours = Math.floor(minutes / 60);
+                let days = Math.floor(hours/24)
 
                 seconds = seconds % 60;
                 minutes = minutes % 60;
@@ -186,16 +187,21 @@
                 // commenting next line gets you `24:00:00` instead of `00:00:00`
                 // or `36:15:31` instead of `12:15:31`, etc.
                 hours = hours % 24;
-
-
-                return `${padTo2Digits(hours)}h:${padTo2Digits(minutes)}m:${padTo2Digits(
-                    seconds,
-                )}s`;
+                days = hours % 24
+                console.log(days, hours, minutes, seconds)
+                if (days >= 1) {
+                    return `${days}d ${hours}h`;
+                }
+                if (hours >= 1) {
+                    return `${hours}h ${minutes}m`;
+                }
+                if (minutes >= 1) {
+                    return `${minutes}m ${seconds}s`;
+                }
+                return `${seconds}s`;
             }
 
-            function padTo2Digits(num) {
-                return num.toString().padStart(2, '0');
-            }
+        
 
         </script>
     </body>
