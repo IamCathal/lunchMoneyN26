@@ -5,8 +5,42 @@
 
     <body>
 
+        <style>
+            body {
+                font-family: Verdana, sans-serif
+            }
+        </style>
+
+        <div style="border: 2px solid orange; width: 30vh; padding: 0.5vh">
+
+            <div style="border: 2px solid rgb(0, 222, 181); text-align: center">
+                N26 -> LunchMoney
+            </div>
+
+            <div style="border: 2px solid rgb(0, 222, 181); text-align: center; padding: 1vh">
+                <div style="display: inline; border: 2px solid red; padding: 0.2vh 2vh 0.2vh 2vh; border-top-right-radius: 0.9vh; border-bottom-left-radius: 0.9vh;">
+                    Import Transactions
+                </div>
+            </div>
+
+            <div style="border: 2px solid rgb(0, 222, 181); text-align: center; padding: 1vh; padding-top: 0">
+                <div style="border: 2px solid green; text-align: center; margin-bottom: 0.8vh">
+                    <p style="font-size: 1.2vh ;padding: 0; margin: 0">Recent Imports</p>
+                </div>
+                <div id="transactionBay">
+
+                </div>
+                
+            </div>
+
+        </div>
+
 
         <script>
+            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+            ];
+
             let ws = new WebSocket("ws://localhost:2944/ws/transactions?days=12");
             ws.onopen = function(e) {
                 console.log("[open] Connection established");
@@ -26,6 +60,71 @@
                     console.log('[close] Connection died');
                 }
             };
+
+            fillInRecentTransactions()
+
+            function fillInRecentTransactions() {
+                let outputHTML = "";
+                const transactions = [
+                    {
+                        "n26FoundTransactions": 4,
+                        "lunchMoneyInseredTransactions": 3,
+                        "daysLookedUp": 2,
+                        "currTime": 1663182596930
+                    }]
+
+                for (let i = 0; i < transactions.length; i++) {
+                    const curr = transactions[i];
+                    const transactionDate = new Date(curr.currTime);
+                    let dateAtBeginningOfScan = new Date(curr.currTime);
+                    dateAtBeginningOfScan = new Date(dateAtBeginningOfScan.setDate(dateAtBeginningOfScan.getDate() - curr.daysLookedUp))
+                    // const dateString = `${date.getDate()} ${monthNames[date.getMonth()]}`
+
+                    outputHTML += `
+                    <div style="border: 2px solid red; padding: 0.2vh 2vh 0.2vh 2vh; border-top-right-radius: 0.9vh; border-bottom-left-radius: 0.9vh;">
+                        <div style="display: inline; border: 2px solid black; padding-top: 0.7vh">
+                            <img
+                                src="https://i.imgur.com/vNnbGKp.png"
+                                width="10%"
+                            >
+                        </div>
+                        <div style="display: inline; border: 2px solid black">
+                            ${curr.n26FoundTransactions}
+                        </div>
+                        <div style="display: inline; border: 2px solid black; padding-top: 0.7vh">
+                            <img
+                                src="https://i.imgur.com/aD0grat.png"
+                                width="7%"
+                            >
+                        </div>
+                        <div style="display: inline">
+                            ${curr.lunchMoneyInseredTransactions}
+                        </div>
+                        <div>
+                            <div style="display: inline; font-size: 1.1vh; border: 2px solid orange">
+                                ${getDaysApartOutputString(dateAtBeginningOfScan, transactionDate)}
+                            </div>
+                        </div>
+                    </div>
+                    `
+                }
+
+                document.getElementById("transactionBay").innerHTML = outputHTML;
+            }
+
+            function getDaysApartOutputString(first, second) {
+                if (first.getMonth() == second.getMonth()) {
+                    return `${first.getDate()} - ${second.getDate()} ${monthNames[first.getMonth()]}`
+                } else {
+                    return `${first.getDate()} ${monthNames[first.getMonth()]} - ${second.getDate()} ${monthNames[second.getMonth()]}`
+                }
+            }
+
+            function dateString(date) {
+                console.log(date.getDate() + " " + monthNames[date.getMonth()])
+                return date.getDate() + " " + monthNames[date.getMonth()]
+            }
+
         </script>
     </body>
 </html>
