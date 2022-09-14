@@ -33,6 +33,27 @@
                 
             </div>
 
+            <div style="border: 2px solid rgb(0, 222, 181); text-align: center; padding-top: 0; padding-bottom: 0;">
+                <div style="border: 2px solid green; text-align: center; margin-bottom: 0vh">
+                    <p style="font-size: 1.2vh ;padding: 0; margin: 0">Status: </p>
+                </div>
+                <div style="display: inline">
+                    <img
+                        src="https://i.imgur.com/3Ktp7tL.png"
+                        width="3%"
+                        id="onlineStatusIndicator"
+                    >
+                </div>
+                <div style="display: inline">
+                    <p style="font-size: 1.2vh ;padding: 0; margin: 0">Uptime: </p>
+                </div>
+                <div style="display: inline">
+                    <p style="font-size: 1.2vh ;padding: 0; margin: 0" id="upTime"></p>
+                </div>
+
+                
+            </div>
+
         </div>
 
 
@@ -41,26 +62,27 @@
                 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
             ];
 
-            let ws = new WebSocket("ws://localhost:2944/ws/transactions?days=12");
-            ws.onopen = function(e) {
-                console.log("[open] Connection established");
-                console.log("Sending to server");
-            };
+            // let ws = new WebSocket("ws://localhost:2944/ws/transactions?days=12");
+            // ws.onopen = function(e) {
+            //     console.log("[open] Connection established");
+            //     console.log("Sending to server");
+            // };
 
-            ws.onmessage = function(event) {
-                console.log(`[message] Data received from server: ${event.data}`);
-            };
+            // ws.onmessage = function(event) {
+            //     console.log(`[message] Data received from server: ${event.data}`);
+            // };
 
-            ws.onclose = function(event) {
-                if (event.wasClean) {
-                    console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
-                } else {
-                    // e.g. server process killed or network down
-                    // event.code is usually 1006 in this case
-                    console.log('[close] Connection died');
-                }
-            };
+            // ws.onclose = function(event) {
+            //     if (event.wasClean) {
+            //         console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+            //     } else {
+            //         // e.g. server process killed or network down
+            //         // event.code is usually 1006 in this case
+            //         console.log('[close] Connection died');
+            //     }
+            // };
 
+            checkStatus()
             fillInRecentTransactions()
 
             function fillInRecentTransactions() {
@@ -123,6 +145,56 @@
             function dateString(date) {
                 console.log(date.getDate() + " " + monthNames[date.getMonth()])
                 return date.getDate() + " " + monthNames[date.getMonth()]
+            }
+
+            function checkStatus() {
+                fetch("http://localhost:2944/status", {
+                    method: 'POST'
+                })
+                .then((res) => res.json())
+                .then((data) => JSON.parse(data))
+                .then((data) => {
+                    document.getElementById("upTime").textContent = convertMsToTime(data.uptime);
+                }, (err) => {
+                    document.getElementById("upTime").textContent = "offline";
+                    document.getElementById("onlineStatusIndicator").style = "filter: invert(30)"
+                });
+            }
+
+            // function upTimeToTimeString(uptime) {
+            //     let now = new Date()
+            //     let startTime = new Date()
+            //     startTime = new Date(startTime.setMilliseconds(startTime.getMilliseconds() - uptime))
+
+            //     return convertMsToTime(uptime)
+                
+            // }
+
+            // https://bobbyhadz.com/blog/javascript-convert-milliseconds-to-hours-minutes-seconds
+            // I will not write this myself. there is no point
+            function convertMsToTime(milliseconds) {
+                console.log(milliseconds)
+                let seconds = Math.floor(milliseconds / 1000);
+                let minutes = Math.floor(seconds / 60);
+                let hours = Math.floor(minutes / 60);
+
+                seconds = seconds % 60;
+                minutes = minutes % 60;
+
+                // 👇️ If you don't want to roll hours over, e.g. 24 to 00
+                // 👇️ comment (or remove) the line below
+                // commenting next line gets you `24:00:00` instead of `00:00:00`
+                // or `36:15:31` instead of `12:15:31`, etc.
+                hours = hours % 24;
+
+
+                return `${padTo2Digits(hours)}h:${padTo2Digits(minutes)}m:${padTo2Digits(
+                    seconds,
+                )}s`;
+            }
+
+            function padTo2Digits(num) {
+                return num.toString().padStart(2, '0');
             }
 
         </script>
