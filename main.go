@@ -17,7 +17,8 @@ import (
 )
 
 var (
-	upgrader = websocket.Upgrader{
+	ApplicationStartUpTime time.Time
+	upgrader               = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}

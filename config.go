@@ -5,11 +5,13 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/joho/godotenv"
 )
 
 func initConfig(args []string) {
+	ApplicationStartUpTime = time.Now()
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")

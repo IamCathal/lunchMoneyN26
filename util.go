@@ -115,6 +115,10 @@ func SendBasicInvalidResponse(w http.ResponseWriter, req *http.Request, msg stri
 
 func logMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		SetupCORS(&w, r)
+		if (*r).Method == "OPTIONS" {
+			return
+		}
 		fmt.Printf("%v %+v\n", time.Now().Format(time.RFC3339), r)
 		next.ServeHTTP(w, r)
 	})
@@ -163,4 +167,10 @@ func divmod(big, little int) (int, int) {
 	quotient := big / little
 	remainder := big % little
 	return quotient, remainder
+}
+
+func SetupCORS(w *http.ResponseWriter, req *http.Request) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 }
