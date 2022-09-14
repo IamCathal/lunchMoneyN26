@@ -60,7 +60,7 @@ func Transactions(w http.ResponseWriter, r *http.Request) {
 func Status(w http.ResponseWriter, r *http.Request) {
 	req := uptimeResponse{
 		Status: "operational",
-		Uptime: time.Since(ApplicationStartUpTime),
+		Uptime: time.Duration(time.Since(ApplicationStartUpTime).Milliseconds()),
 	}
 	jsonObj, err := json.MarshalIndent(req, "", "\t")
 	if err != nil {
