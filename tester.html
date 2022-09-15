@@ -10,12 +10,30 @@
                 font-family: Verdana, sans-serif;
                 color: white
             }
-            /* tr {
-                border: 2px solid orange;
+            tr {
+                border: 1px solid orange;
             }
             td {
-                border: 2px solid purple;
-            } */
+                border: 1px solid purple;
+            }
+
+            .skeleton {
+                opacity: 0.6;
+                animation: skeleton-loading 0.5s linear infinite alternate;
+                border-radius: 8px;
+            }
+
+            @keyframes skeleton-loading {
+                0% {
+                /* background-color: hsl(199, 81%, 44%); */
+                    filter: grayscale(0)
+                }
+                100% {
+                /* background-color: hsl(200, 20%, 95%); */
+                    filter: grayscale(70) brightness(20)
+                }
+            }
+
         </style>
 
         <div style="width: 25vh; padding: 0.5vh; background-color:#141314">
@@ -25,12 +43,74 @@
             </div>
 
             <div style="text-align: center; padding: 1vh">
-                <div style="font-weight: bold; font-size: 1.5vh; display: inline; border: 2px solid grey; padding: 0.2vh 2vh 0.2vh 2vh; border-top-right-radius: 0.9vh; border-bottom-left-radius: 0.9vh;">
-                    Import Transactions
-                </div>
+                <a href="" style="text-decoration: none; color: white" id="importTransactionsButton">
+                    <div style="font-weight: bold; font-size: 1.5vh; display: inline; border: 2px solid grey; padding: 0.2vh 2vh 0.2vh 2vh; border-top-right-radius: 0.9vh; border-bottom-left-radius: 0.9vh;">
+                        Import Transactions
+                    </div>
+                </a>    
             </div>
 
             <div style="padding: 1vh; padding-top: 0; padding-bottom: 0">
+                <div style="text-align: center; margin-bottom: 0.0; border: 1px solid grey">
+                    <table style="font-size: 1.2vh">
+                        <tr>
+                            <td>
+                                <span style="margin-left: 0.5vh; margin-right: 0.5vh">
+                                    <img
+                                        src="https://i.imgur.com/3Ktp7tL.png"
+                                        width="4%"
+                                        style="margin-top: 0.3vh;"
+                                        id="waitingFor2FAIcon"
+                                        class="skeleton"
+                                    >
+                                </span>
+                                Authorize login within <span id="2FACountdownText">5m 20s</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span style="margin-left: 0.5vh; margin-right: 0.5vh">
+                                    <img
+                                        src="https://i.imgur.com/3Ktp7tL.png"
+                                        width="4%"
+                                        style="margin-top: 0.3vh"
+                                        id="retrievingFromN26Icon"
+                                        class="skeleton"
+                                    >
+                                </span>
+                                Retrieving from N26
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span style="margin-left: 0.5vh; margin-right: 0.5vh">
+                                    <img
+                                        src="https://i.imgur.com/3Ktp7tL.png"
+                                        width="4%"
+                                        style="margin-top: 0.3vh"
+                                        id="insertingIntoLunchMoneyIcon"
+                                        class="skeleton"
+                                    >
+                                </span>
+                                Inserting into LunchMoney
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span style="margin-left: 0.5vh; margin-right: 0.5vh">
+                                    <img
+                                        src="https://i.imgur.com/3Ktp7tL.png"
+                                        width="4%"
+                                        style="margin-top: 0.3vh"
+                                        id="savingSummaryIcon"
+                                        class="skeleton"
+                                    >
+                                </span>
+                                Saving summary
+                            </td>
+                        </tr>
+                    </table>
+                </div>
                 <div style="text-align: center; margin-bottom: 0.0">
                     <p style="font-size: 1.2vh ;padding: 0; margin: 0">Recent Imports</p>
                 </div>
@@ -112,26 +192,6 @@
             const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
             ];
-
-            // let ws = new WebSocket("ws://localhost:2944/ws/transactions?days=12");
-            // ws.onopen = function(e) {
-            //     console.log("[open] Connection established");
-            //     console.log("Sending to server");
-            // };
-
-            // ws.onmessage = function(event) {
-            //     console.log(`[message] Data received from server: ${event.data}`);
-            // };
-
-            // ws.onclose = function(event) {
-            //     if (event.wasClean) {
-            //         console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
-            //     } else {
-            //         // e.g. server process killed or network down
-            //         // event.code is usually 1006 in this case
-            //         console.log('[close] Connection died');
-            //     }
-            // };
 
             checkStatus()
             setInterval(checkStatus, 10000)
@@ -228,6 +288,49 @@
                 }
 
                 document.getElementById("transactionBay").innerHTML = outputHTML;
+            }
+
+            document.getElementById("importTransactionsButton").addEventListener("click", function(e){
+                e.preventDefault();
+
+                const ws = new WebSocket("ws://localhost:2944/ws/transactions?days=12");
+                ws.onopen = function(e) {
+                    console.log("[open] Connection established");
+                    console.log("Sending to server");
+                };
+
+                ws.onmessage = function(event) {
+                    handleNewWsMessage(event)
+                }
+
+                ws.onclose = function(event) {
+                    if (event.wasClean) {
+                        console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+                    } else {
+                        // e.g. server process killed or network down
+                        // event.code is usually 1006 in this case
+                        console.log('[close] Connection died');
+                    }
+                };
+            });
+
+            function handleNewWsMessage(event) {
+                const res = JSON.parse(event.data)
+                console.log(res)
+
+                // This is not best practice teehee
+                if (res.msg == "N26 has been authorized") {
+                    document.getElementById("waitingFor2FAIcon").classList.remove("skeleton");
+                }
+                else if (res.msg == "Retrieved transactions from N26") {
+                    document.getElementById("retrievingFromN26Icon").classList.remove("skeleton");
+                }
+                else if (res.msg == "transactions inserted into LunchMoney") {
+                    document.getElementById("insertingIntoLunchMoneyIcon").classList.remove("skeleton");
+                }
+                else if (res.msg == "transaction finished") {
+                    document.getElementById("savingSummaryIcon").classList.remove("skeleton");
+                }
             }
 
             function getDaysApartOutputString(first, second) {
