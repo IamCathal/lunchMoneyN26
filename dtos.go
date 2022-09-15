@@ -19,8 +19,9 @@ type appConfig struct {
 // UptimeResponse is the standard response
 // for any service's /status endpoint
 type uptimeResponse struct {
-	Status string        `json:"status"`
-	Uptime time.Duration `json:"uptime"`
+	Status      string        `json:"status"`
+	Uptime      time.Duration `json:"uptime"`
+	StartUpTime int64         `json:"startuptime"`
 }
 
 type uploadTransactionsDTO struct {
