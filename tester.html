@@ -50,67 +50,11 @@
                 </a>    
             </div>
 
-            <div style="padding: 1vh; padding-top: 0; padding-bottom: 0">
-                <div style="text-align: center; margin-bottom: 0.0; border: 1px solid grey">
-                    <table style="font-size: 1.2vh">
-                        <tr>
-                            <td>
-                                <span style="margin-left: 0.5vh; margin-right: 0.5vh">
-                                    <img
-                                        src="https://i.imgur.com/3Ktp7tL.png"
-                                        width="4%"
-                                        style="margin-top: 0.3vh;"
-                                        id="waitingFor2FAIcon"
-                                        class="skeleton"
-                                    >
-                                </span>
-                                Authorize login within <span id="2FACountdownText">5m 20s</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <span style="margin-left: 0.5vh; margin-right: 0.5vh">
-                                    <img
-                                        src="https://i.imgur.com/3Ktp7tL.png"
-                                        width="4%"
-                                        style="margin-top: 0.3vh"
-                                        id="retrievingFromN26Icon"
-                                        class="skeleton"
-                                    >
-                                </span>
-                                Retrieving from N26
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <span style="margin-left: 0.5vh; margin-right: 0.5vh">
-                                    <img
-                                        src="https://i.imgur.com/3Ktp7tL.png"
-                                        width="4%"
-                                        style="margin-top: 0.3vh"
-                                        id="insertingIntoLunchMoneyIcon"
-                                        class="skeleton"
-                                    >
-                                </span>
-                                Inserting into LunchMoney
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <span style="margin-left: 0.5vh; margin-right: 0.5vh">
-                                    <img
-                                        src="https://i.imgur.com/3Ktp7tL.png"
-                                        width="4%"
-                                        style="margin-top: 0.3vh"
-                                        id="savingSummaryIcon"
-                                        class="skeleton"
-                                    >
-                                </span>
-                                Saving summary
-                            </td>
-                        </tr>
-                    </table>
+            <div style=" padding: 1vh; padding-top: 0; padding-bottom: 0">
+                <div id="requestStatusBox">
+                    
                 </div>
+
                 <div style="text-align: center; margin-bottom: 0.0">
                     <p style="font-size: 1.2vh ;padding: 0; margin: 0">Recent Imports</p>
                 </div>
@@ -141,7 +85,7 @@
                 
             </div>
 
-            <div style=" padding-top: 0; padding-bottom: 0;">
+            <div style="padding-top: 0; padding-bottom: 0;">
                 <div style="display: inline; padding-top: 0.7vh; margin-left: 0.9vh; text-align: right">
                     <p style="display: inline; font-size: 1.2vh ;padding: 0; margin: 0">
                         <img
@@ -297,6 +241,7 @@
                 ws.onopen = function(e) {
                     console.log("[open] Connection established");
                     console.log("Sending to server");
+                    createRequestStatusBox()
                 };
 
                 ws.onmessage = function(event) {
@@ -311,6 +256,7 @@
                         // event.code is usually 1006 in this case
                         console.log('[close] Connection died');
                     }
+                    hideCreateStatusRequestBox() 
                 };
             });
 
@@ -363,6 +309,78 @@
                     document.getElementById("onlineStatusText").textContent = "Offline"
                     document.getElementById("onlineStatusIndicator").style = "filter: invert(30)"
                 });
+            }
+
+           
+            function createRequestStatusBox() {
+                console.log("opening")
+                document.getElementById("requestStatusBox").innerHTML = `
+                <div style="text-align: center; margin-bottom: 0.0; border: 1px solid grey">
+                        <table style="font-size: 1.2vh">
+                            <tr>
+                                <td>
+                                    <span style="margin-left: 0.5vh; margin-right: 0.5vh">
+                                        <img
+                                            src="https://i.imgur.com/3Ktp7tL.png"
+                                            width="4%"
+                                            style="margin-top: 0.3vh;"
+                                            id="waitingFor2FAIcon"
+                                            class="skeleton"
+                                        >
+                                    </span>
+                                    Authorize login within <span id="2FACountdownText">5m 20s</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span style="margin-left: 0.5vh; margin-right: 0.5vh">
+                                        <img
+                                            src="https://i.imgur.com/3Ktp7tL.png"
+                                            width="4%"
+                                            style="margin-top: 0.3vh"
+                                            id="retrievingFromN26Icon"
+                                            class="skeleton"
+                                        >
+                                    </span>
+                                    Retrieving from N26
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span style="margin-left: 0.5vh; margin-right: 0.5vh">
+                                        <img
+                                            src="https://i.imgur.com/3Ktp7tL.png"
+                                            width="4%"
+                                            style="margin-top: 0.3vh"
+                                            id="insertingIntoLunchMoneyIcon"
+                                            class="skeleton"
+                                        >
+                                    </span>
+                                    Inserting into LunchMoney
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span style="margin-left: 0.5vh; margin-right: 0.5vh">
+                                        <img
+                                            src="https://i.imgur.com/3Ktp7tL.png"
+                                            width="4%"
+                                            style="margin-top: 0.3vh"
+                                            id="savingSummaryIcon"
+                                            class="skeleton"
+                                        >
+                                    </span>
+                                    Saving summary
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                `;
+            }
+
+            function hideCreateStatusRequestBox() {
+                console.log("closing")
+                document.getElementById("requestStatusBox").innerHTML = ``;
             }
 
             // // https://bobbyhadz.com/blog/javascript-convert-milliseconds-to-hours-minutes-seconds
