@@ -10,23 +10,50 @@
                 font-family: Verdana, sans-serif;
                 color: white
             }
+            /* tr {
+                border: 2px solid orange;
+            }
+            td {
+                border: 2px solid purple;
+            } */
         </style>
 
-        <div style="width: 30vh; padding: 0.5vh; background-color:#141314">
+        <div style="width: 25vh; padding: 0.5vh; background-color:#141314">
 
             <div style="text-align: center">
                 N26 -> LunchMoney
             </div>
 
             <div style="text-align: center; padding: 1vh">
-                <div style="display: inline; border: 2px solid white; padding: 0.2vh 2vh 0.2vh 2vh; border-top-right-radius: 0.9vh; border-bottom-left-radius: 0.9vh;">
+                <div style="font-weight: bold; font-size: 1.5vh; display: inline; border: 2px solid grey; padding: 0.2vh 2vh 0.2vh 2vh; border-top-right-radius: 0.9vh; border-bottom-left-radius: 0.9vh;">
                     Import Transactions
                 </div>
             </div>
 
-            <div style="padding: 1vh; padding-top: 0">
-                <div style="text-align: center; margin-bottom: 0.8vh">
+            <div style="padding: 1vh; padding-top: 0; padding-bottom: 0">
+                <div style="text-align: center; margin-bottom: 0.0">
                     <p style="font-size: 1.2vh ;padding: 0; margin: 0">Recent Imports</p>
+                </div>
+                <div style="text-align: center; margin-bottom: 0vh">
+                    <table>
+                        <tr style="font-size: 0.9vh; text-align: center">
+                            <td style="width: 15%">
+                                
+                            </td>
+                            <td>
+                                Retrieved
+                            </td>
+                            <td style="width: 60%">
+                                
+                            </td>
+                            <td>
+                                Consumed
+                            </td>
+                            <td style="width: 150%">
+                                
+                            </td>
+                        </tr>
+                    </table>
                 </div>
                 <div id="transactionBay">
 
@@ -134,7 +161,8 @@
                         "currTime": 1663182596930
                     }]
 
-                for (let i = 0; i < transactions.length; i++) {
+                    const fiveOrLessMostRecentTransactions = transactions.length >= 4 ? transactions.slice(3) : transactions;
+                for (let i = 0; i < fiveOrLessMostRecentTransactions.length; i++) {
                     const curr = transactions[i];
                     const transactionDate = new Date(curr.currTime);
                     let dateAtBeginningOfScan = new Date(curr.currTime);
@@ -147,13 +175,15 @@
                             borderRadiuses += borderArr[k]
                         }
                     } 
+                    const bottomMargin = i == (fiveOrLessMostRecentTransactions.length - 1) ? '' : 'margin-bottom: 0.8vh;';
 
                     outputHTML += `
                     <td>
                     </td>
-                    <div style="margin-top: 0.8vh; padding: 0.2vh 2vh 0.2vh 2vh; border: 1px solid white; ${borderRadiuses}">
+                    <div style="${bottomMargin} padding: 0.2vh 0.5vh 0.2vh 0.5vh; border: 1px solid grey; ${borderRadiuses}">
                         <table>
                             <tr style="text-align: center; width: 100%; float: center">
+
                                 <td style="width: 3vh">
                                     <img
                                         src="https://i.imgur.com/vNnbGKp.png"
@@ -161,20 +191,31 @@
                                         style="filter: invert()"
                                     >   
                                 </td>
-                                <td style="width: 25%; margin-left: 0.4vh; text-align: left">
+
+                                <td>
+                                </td>
+
+                                <td style="font-weight: bold; width: 20%; margin-left: 0.4vh; text-align: left">
                                     ${curr.n26FoundTransactions}
                                 </td>
+
                                 <td style="width: 20%">
                                 </td>
-                                <td style="width: 25%; text-align: right ">
+
+                                <td style="font-weight: bold; width: 20%; text-align: right ">
                                     ${curr.lunchMoneyInseredTransactions}
                                 </td>
-                                <td style="width: 2vh;float: right">
+
+                                <td>
+                                </td>
+
+                                <td style="width: 90%;float: right">
                                     <img
                                         src="https://i.imgur.com/aD0grat.png"
-                                        width="100%"
+                                        width="60%"
                                     >
                                 </td>
+
                             </tr>
                         </table>
                         <div style="text-align: center">
@@ -217,15 +258,6 @@
                 });
             }
 
-            // function upTimeToTimeString(uptime) {
-            //     let now = new Date()
-            //     let startTime = new Date()
-            //     startTime = new Date(startTime.setMilliseconds(startTime.getMilliseconds() - uptime))
-
-            //     return convertMsToTime(uptime)
-                
-            // }
-
             // https://bobbyhadz.com/blog/javascript-convert-milliseconds-to-hours-minutes-seconds
             // I will not write this myself. there is no point
             function convertMsToTime(milliseconds) {
@@ -240,13 +272,13 @@
                 days = hours % 24
 
                 if (days >= 1) {
-                    return `${days}d ${hours}h`;
+                    return `${days}d`;
                 }
                 if (hours >= 1) {
-                    return `${hours}h ${minutes}m`;
+                    return `${hours}h`;
                 }
                 if (minutes >= 1) {
-                    return `${minutes}m ${seconds}s`;
+                    return `${minutes}m`;
                 }
                 return `${seconds}s`;
             }
