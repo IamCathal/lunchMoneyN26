@@ -10,11 +10,14 @@
                 font-family: Verdana, sans-serif;
                 color: white
             }
-            tr {
+            /* tr {
                 border: 1px solid orange;
             }
             td {
                 border: 1px solid purple;
+            } */
+            input:focus {
+                outline: none;
             }
 
             .skeleton {
@@ -38,9 +41,9 @@
 
         <div style="width: 25vh; padding: 0.5vh; background-color:#141314">
 
-            <div style="text-align: center">
+            <!-- <div style="text-align: center">
                 N26 -> LunchMoney
-            </div>
+            </div> -->
 
             <div style="text-align: center; padding: 1vh">
                 <a href="" style="text-decoration: none; color: white" id="importTransactionsButton">
@@ -99,12 +102,18 @@
                         </span>
                     </p>
                 </div>
-                <div style="display: inline; float: right; padding-top: 0.5vh; padding-right: 0.9vh">
+              
+                <div style="display: inline; padding-top: 0.5vh; padding-right: 0.9vh">
                     <span>
                         <div style="display: inline; width: 40%; font-size: 1vh ; padding: 0; margin: 0">
                             Uptime: <span id="upTime"></span>
                         </div>
                     </span>
+                </div>
+                <div style="display: inline; float: right; padding-top: 0.5vh; padding-right: 0.9vh">
+                    <div id="settingsButton" style="display: inline; width: 40%; font-size: 1vh ; padding: 0; margin: 0">
+                        settings
+                    </div>
                 </div>
                 
                 <!-- <span>
@@ -126,6 +135,37 @@
                         Uptime: <span id="upTime"></span>
                     </div>
                 </span> -->
+            </div>
+
+            <div style="padding-top: 0; padding-bottom: 0; padding-left: 0.8vh; padding-right: 0.8vh">
+                <hr style="padding: 0; margin: 0; margin-top: 0.4vh"/>
+                <table style="text-align: center; width: 100%">
+                    <tr>
+                        <td style="font-size: 1.3vh;">
+                            Backend URL
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width: 100%">
+                            <input 
+                                type="text" id="backendURLInput"
+                                style="font-size: 1.1vh; background-color: #464646; border: 1px solid grey; color: white; width: 100%"
+                            >
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="float: left">
+                            <span>
+                                <button id="testBackendURL" style="font-size: 1.1vh; width: 7vh">
+                                    Test
+                                </button>   
+                            </span>
+                            <span id="testBackendStatus" style="font-size: 1.2vh;">
+                                
+                            </span>
+                        </td>
+                    </tr>
+                </table>
             </div>
 
 
@@ -328,7 +368,7 @@
                                             class="skeleton"
                                         >
                                     </span>
-                                    Authorize login within <span id="2FACountdownText">5m 20s</span>
+                                    Authorize login within <span id="2FACountdownText">5m</span>
                                 </td>
                             </tr>
                             <tr>
@@ -435,6 +475,29 @@
                 }
                 return Math.floor(seconds) + "s";
             }
+
+            document.getElementById("settingsButton").addEventListener("click", (event) => {
+                console.log("click")
+            });
+
+            document.getElementById("testBackendURL").addEventListener("click", (event) => {
+                const backendURLToTest = document.getElementById("backendURLInput").value;
+                
+                fetch(`${backendURLToTest}/status`, {
+                    method: 'POST'
+                })
+                .then((res) => res.json())
+                .then((data) => JSON.parse(data))
+                .then((data) => {
+                    if (data.status == "operational") {
+                        document.getElementById("testBackendStatus").textContent = "Working :)"
+                    } else {
+                        document.getElementById("testBackendStatus").textContent = "Nope"
+                    }
+                }, (err) => {
+                    document.getElementById("testBackendStatus").textContent = "Nope"
+                });
+            });
 
         
 
