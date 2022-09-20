@@ -1,0 +1,175 @@
+<html>
+    <head>
+        <title> websocket test </title>
+    </head>
+
+    <body>
+
+        <style>
+            body {
+                font-family: Verdana, sans-serif;
+                color: white;
+                background-color:#141314;
+            }
+            /* tr {
+                border: 1px solid orange;
+            }
+            td {
+                border: 1px solid purple;
+            } */
+            input:focus {
+                outline: none;
+            }
+
+            .skeleton {
+                opacity: 0.6;
+                animation: skeleton-loading 0.5s linear infinite alternate;
+                border-radius: 8px;
+            }
+
+            @keyframes skeleton-loading {
+                0% {
+                /* background-color: hsl(199, 81%, 44%); */
+                    filter: grayscale(0)
+                }
+                100% {
+                /* background-color: hsl(200, 20%, 95%); */
+                    filter: grayscale(70) brightness(20)
+                }
+            }
+
+        </style>
+
+        <div style="width: 18rem; padding: 0.5vh; background-color:#141314">
+
+            <div style="text-align: center; padding: 1vh">
+                <a href="" style="text-decoration: none; color: white" id="importTransactionsButton">
+                    <div style="font-weight: bold; font-size: 7vh; display: inline; border: 2px solid grey; padding: 0.2vh 2vh 0.2vh 2vh; border-top-right-radius: 3vh; border-bottom-left-radius: 3vh;">
+                        Import Transactions
+                    </div>
+                </a>    
+            </div>
+
+            <div style=" padding: 3vh; padding-top: 0; padding-bottom: 0">
+                <div id="requestStatusBox">
+                    
+                </div>
+
+                <div style="text-align: center; margin-bottom: 0.0">
+                    <p style="font-size: 5vh ;padding: 0; margin: 0">Recent Imports</p>
+                </div>
+                <div style="text-align: center; margin-bottom: 0vh">
+                    <table>
+                        <tr style="font-size: 4vh; text-align: center">
+                            <td style="width: 15%">
+                                
+                            </td>
+                            <td>
+                                Retrieved
+                            </td>
+                            <td style="width: 60%">
+                                
+                            </td>
+                            <td>
+                                Consumed
+                            </td>
+                            <td style="width: 150%">
+                                
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div id="transactionBay">
+
+                </div>
+                
+            </div>
+
+            <div style="padding-top: 0; padding-bottom: 0;">
+                <div style="display: inline; padding-top: 0.7vh; margin-left: 0.9vh; text-align: right">
+                    <p style="display: inline; font-size: 4vh ;padding: 0; margin: 0">
+                        <img
+                            src="https://i.imgur.com/3Ktp7tL.png"
+                            width="3%"
+                            style="margin-top: 0.3vh"
+                            id="onlineStatusIndicator"
+                        >
+                        <span id="onlineStatusText" style=" font-size: 4vh; margin-bottom: 0.3vh">
+
+                        </span>
+                    </p>
+                </div>
+              
+                <div style="display: inline; padding-top: 0.5vh; padding-right: 0.9vh">
+                    <span>
+                        <div style="display: inline; width: 40%; font-size: 4vh ; padding: 0; margin: 0">
+                            Uptime: <span id="upTime"></span>
+                        </div>
+                    </span>
+                </div>
+                <div style="display: inline; float: right; padding-top: 0.5vh; padding-right: 0.9vh">
+                    <div id="settingsButton" style="display: inline; width: 40%; font-size: 4vh ; padding: 0; margin: 0">
+                        settings
+                    </div>
+                </div>
+                
+                <!-- <span>
+                    <div style="border: 2px solid black; width: 40%; text-align: center; margin-bottom: 0vh">
+                        <p style="display: inline; font-size: 1.2vh ;padding: 0; margin: 0">
+                            <img
+                                src="https://i.imgur.com/3Ktp7tL.png"
+                                width="5%"
+                                id="onlineStatusIndicator"
+                            >
+                            <span id="onlineStatusText">
+    
+                            </span>
+                        </p>
+                    </div>
+                </span>
+                <span>
+                    <div style="display: inline; width: 40%; font-size: 1.2vh ; padding: 0; margin: 0">
+                        Uptime: <span id="upTime"></span>
+                    </div>
+                </span> -->
+            </div>
+
+            <div style="padding-top: 0; padding-bottom: 0; padding-left: 0.8vh; padding-right: 0.8vh">
+                <hr style="padding: 0; margin: 0; margin-top: 0.4vh"/>
+                <table style="text-align: center; width: 100%">
+                    <tr>
+                        <td style="font-size: 4vh;">
+                            Backend URL
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width: 100%">
+                            <input 
+                                type="text" id="backendURLInput"
+                                style="font-size: 4vh; background-color: #464646; border: 1px solid grey; color: white; width: 100%"
+                            >
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="float: left">
+                            <span>
+                                <button id="testBackendURL" style="font-size: 3.8vh; width: 14vh">
+                                    Test
+                                </button>   
+                            </span>
+                            <span id="testBackendStatus" style="font-size: 4vh;">
+                                
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+
+        </div>
+
+
+        <script src="script.js"></script>
+
+    </body>
+</html>
