@@ -10,6 +10,27 @@ window.onload = function() {
         setInterval(checkStatus, 10000)
     })
 
+    // browser.storage.local.set({
+    //     "transactions": [
+    //         {
+    //             "n26FoundTransactions": 4,
+    //             "lunchMoneyInseredTransactions": 3,
+    //             "daysLookedUp": 2,
+    //             "currTime": 1663182596930
+    //         },
+    //         {
+    //             "n26FoundTransactions": 12,
+    //             "lunchMoneyInseredTransactions": 9,
+    //             "daysLookedUp": 9,
+    //             "currTime": 1663182596930
+    //         }]
+    // }).then((res) => {
+    //     console.log("Successfully set transactions")
+    //     console.log(res)
+    // }, (err) => {
+    //     console.error(`Failed to set transactions: ${err}`)
+    // })
+
     giveSwayaaangBordersToSettingsButton()
     fillInRecentTransactions()
 
@@ -42,83 +63,87 @@ function swayaaangBorders(borderRadius) {
     return borderRadiuses
 }
 
+function getMostRecentTransactions(numTransactions) {
+    return new Promise((resolve, reject) => {
+        getStorageVariable("transactions").then((res) => {
+            if (res.length >= numTransactions) {
+                resolve(res.slice(numTransactions))
+            } else {
+                resolve(res)
+            }
+        }, (err) => {
+            reject(err)
+        })
+    })
+   
+}
+
 
 function fillInRecentTransactions() {
     let outputHTML = "";
-    const transactions = [
-        {
-            "n26FoundTransactions": 4,
-            "lunchMoneyInseredTransactions": 3,
-            "daysLookedUp": 2,
-            "currTime": 1663182596930
-        },
-        {
-            "n26FoundTransactions": 12,
-            "lunchMoneyInseredTransactions": 9,
-            "daysLookedUp": 9,
-            "currTime": 1663182596930
-        }]
 
-        const fiveOrLessMostRecentTransactions = transactions.length >= 4 ? transactions.slice(3) : transactions;
-    for (let i = 0; i < fiveOrLessMostRecentTransactions.length; i++) {
-        const curr = transactions[i];
-        const transactionDate = new Date(curr.currTime);
-        let dateAtBeginningOfScan = new Date(curr.currTime);
-        dateAtBeginningOfScan = new Date(dateAtBeginningOfScan.setDate(dateAtBeginningOfScan.getDate() - curr.daysLookedUp))
-
-        const bottomMargin = i == (fiveOrLessMostRecentTransactions.length - 1) ? '' : 'margin-bottom: 0.3rem;';
-
-        outputHTML += `
-        <td>
-        </td>
-        <div style="${bottomMargin} padding: 0.2rem 0.4rem 0.2rem 0.4rem; border: 1px solid grey; ${swayaaangBorders(0.55)}">
-            <table>
-                <tr style="text-align: center; width: 100%; float: center">
-
-                    <td style="width: 1.5rem">
-                        <img
-                            src="https://i.imgur.com/vNnbGKp.png"
-                            width="100%"
-                            style="filter: invert()"
-                        >   
-                    </td>
-
-                    <td>
-                    </td>
-
-                    <td style="font-weight: bold; width: 20%; margin-left: 0.4vh; text-align: left">
-                        ${curr.n26FoundTransactions}
-                    </td>
-
-                    <td style="width: 20%">
-                    </td>
-
-                    <td style="font-weight: bold; width: 20%; text-align: right ">
-                        ${curr.lunchMoneyInseredTransactions}
-                    </td>
-
-                    <td>
-                    </td>
-
-                    <td style="width: 50%;float: right">
-                        <img
-                            src="https://i.imgur.com/aD0grat.png"
-                            width="60%"
-                        >
-                    </td>
-
-                </tr>
-            </table>
-            <div style="text-align: center">
-                <div style="display: inline; font-size: 0.65rem">
-                    ${getDaysApartOutputString(dateAtBeginningOfScan, transactionDate)}
+    getMostRecentTransactions(5).then((transactions) => {
+        for (let i = 0; i < transactions.length; i++) {
+            const curr = transactions[i];
+            const transactionDate = new Date(curr.currTime);
+            let dateAtBeginningOfScan = new Date(curr.currTime);
+            dateAtBeginningOfScan = new Date(dateAtBeginningOfScan.setDate(dateAtBeginningOfScan.getDate() - curr.daysLookedUp))
+    
+            const bottomMargin = i == (transactions.length - 1) ? '' : 'margin-bottom: 0.3rem;';
+    
+            outputHTML += `
+            <td>
+            </td>
+            <div style="${bottomMargin} padding: 0.2rem 0.4rem 0.2rem 0.4rem; border: 1px solid grey; ${swayaaangBorders(0.55)}">
+                <table>
+                    <tr style="text-align: center; width: 100%; float: center">
+    
+                        <td style="width: 1.5rem">
+                            <img
+                                src="https://i.imgur.com/vNnbGKp.png"
+                                width="100%"
+                                style="filter: invert()"
+                            >   
+                        </td>
+    
+                        <td>
+                        </td>
+    
+                        <td style="font-weight: bold; width: 20%; margin-left: 0.4vh; text-align: left">
+                            ${curr.n26FoundTransactions}
+                        </td>
+    
+                        <td style="width: 20%">
+                        </td>
+    
+                        <td style="font-weight: bold; width: 20%; text-align: right ">
+                            ${curr.lunchMoneyInseredTransactions}
+                        </td>
+    
+                        <td>
+                        </td>
+    
+                        <td style="width: 50%;float: right">
+                            <img
+                                src="https://i.imgur.com/aD0grat.png"
+                                width="60%"
+                            >
+                        </td>
+    
+                    </tr>
+                </table>
+                <div style="text-align: center">
+                    <div style="display: inline; font-size: 0.65rem">
+                        ${getDaysApartOutputString(dateAtBeginningOfScan, transactionDate)}
+                    </div>
                 </div>
             </div>
-        </div>
-        `
-    }
-
-    document.getElementById("transactionBay").innerHTML = outputHTML;
+            `
+        }
+        document.getElementById("transactionBay").innerHTML = outputHTML;
+    }, (err) => {
+        console.error(err)
+    })
 }
 
 document.getElementById("importTransactionsButton").addEventListener("click", function(e){
