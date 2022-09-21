@@ -21,7 +21,7 @@ func wsTransactions(w http.ResponseWriter, r *http.Request) {
 	}
 	wsSummaryStats := wsTransactionStats{
 		DaysLookedUp: daysToLookup,
-		CurrTime:     time.Now(),
+		CurrTime:     time.Now().Unix(),
 	}
 	defer wsFinish(ws, &wsSummaryStats)
 
