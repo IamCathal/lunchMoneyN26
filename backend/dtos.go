@@ -51,8 +51,8 @@ type websocketMessage struct {
 }
 
 type wsTransactionStats struct {
-	N26FoundTransactions           int   `json:"n26FoundTransactions"`
-	LunchMoneyInsertedTranscations int   `json:"lunchMoneyInseredTransactions"`
-	DaysLookedUp                   int   `json:"daysLookedUp"`
-	CurrTime                       int64 `json:"currTime"`
+	N26FoundTransactions           int       `json:"n26FoundTransactions"`
+	LunchMoneyInsertedTranscations int       `json:"lunchMoneyInseredTransactions"`
+	DaysLookedUp                   int       `json:"daysLookedUp"`
+	CurrTime                       time.Time `json:"currTime"`
 }
