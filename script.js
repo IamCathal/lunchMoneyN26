@@ -2,12 +2,15 @@ const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 ];
 
+let settingsPanelIsVisible = false;
+
 window.onload = function() {
     console.log("LOADED UP BAI")
     checkStatus().then((res) => {
         setInterval(checkStatus, 10000)
     })
 
+    giveSwayaaangBordersToSettingsButton()
     fillInRecentTransactions()
 
     // getStorageVariable("backendURL").then((res) => {
@@ -17,16 +20,30 @@ window.onload = function() {
     // })
 }
 
+function giveSwayaaangBordersToSettingsButton() {
+    document.getElementById("settingsButton").style = swayaaangBorders(0.6)
+}
+
+function swayaaangBorders(borderRadius) {
+    const borderArr = [
+        `border-top-right-radius: ${borderRadius}rem;`, 
+        `border-bottom-right-radius: ${borderRadius}rem;`,
+        `border-top-left-radius: ${borderRadius}rem;`,
+        `border-bottom-left-radius: ${borderRadius}rem;`,
+    ]
+
+    let borderRadiuses = "";
+    for (let k = 0; k < 4; k++) {
+        const randNum = Math.floor(Math.random() * 2)
+        if (randNum % 2 == 0) {
+            borderRadiuses += borderArr[k]
+        }
+    } 
+    return borderRadiuses
+}
+
 
 function fillInRecentTransactions() {
-    const swishLeftBorders = `border-top-right-radius: 0.9vh; border-bottom-left-radius: 0.9vh;`;
-    const swishRightBorders = `border-top-left-radius: 0.9vh; border-bottom-right-radius: 0.9vh;`;
-    const borderArr = [
-        "border-top-right-radius: 0.9vh;", 
-        "border-bottom-right-radius: 0.9vh;",
-        "border-top-left-radius: 0.9vh;",
-        "border-bottom-left-radius: 0.9vh;",
-    ]
     let outputHTML = "";
     const transactions = [
         {
@@ -49,23 +66,16 @@ function fillInRecentTransactions() {
         let dateAtBeginningOfScan = new Date(curr.currTime);
         dateAtBeginningOfScan = new Date(dateAtBeginningOfScan.setDate(dateAtBeginningOfScan.getDate() - curr.daysLookedUp))
 
-        let borderRadiuses = "";
-        for (let k = 0; k < 4; k++) {
-            const randNum = Math.floor(Math.random() * 2)
-            if (randNum % 2 == 0) {
-                borderRadiuses += borderArr[k]
-            }
-        } 
-        const bottomMargin = i == (fiveOrLessMostRecentTransactions.length - 1) ? '' : 'margin-bottom: 0.8vh;';
+        const bottomMargin = i == (fiveOrLessMostRecentTransactions.length - 1) ? '' : 'margin-bottom: 0.3rem;';
 
         outputHTML += `
         <td>
         </td>
-        <div style="${bottomMargin} padding: 0.2vh 0.5vh 0.2vh 0.5vh; border: 1px solid grey; ${borderRadiuses}">
+        <div style="${bottomMargin} padding: 0.2rem 0.4rem 0.2rem 0.4rem; border: 1px solid grey; ${swayaaangBorders(0.55)}">
             <table>
                 <tr style="text-align: center; width: 100%; float: center">
 
-                    <td style="width: 8vh">
+                    <td style="width: 1.5rem">
                         <img
                             src="https://i.imgur.com/vNnbGKp.png"
                             width="100%"
@@ -100,7 +110,7 @@ function fillInRecentTransactions() {
                 </tr>
             </table>
             <div style="text-align: center">
-                <div style="display: inline; font-size: 4.3vh">
+                <div style="display: inline; font-size: 0.65rem">
                     ${getDaysApartOutputString(dateAtBeginningOfScan, transactionDate)}
                 </div>
             </div>
@@ -327,36 +337,110 @@ function timeSince(date) {
 }
 
 document.getElementById("settingsButton").addEventListener("click", (event) => {
-    console.log("click")
+    settingsPanelButtonClicked()
 });
 
-document.getElementById("testBackendURL").addEventListener("click", (event) => {
-    const newURLString = document.getElementById("backendURLInput").value;
-    try {
-        const testURL = new URL(newURLString)
-    } catch (_) {
-        document.getElementById("testBackendStatus").textContent = "Nope"
+function settingsPanelButtonClicked() {
+    if (settingsPanelIsVisible) {
+        document.getElementById("settingsPanel").innerHTML = ``
+        settingsPanelIsVisible = false
         return
     }
 
-    fetch(`${newURLString}/status`, {
-        method: 'POST'
+    settingsPanelIsVisible = true
+    getStorageVariable("backendURL").then((backendURL) => {
+        document.getElementById("settingsPanel").innerHTML = `
+        <div style="padding-top: 0; padding-bottom: 0; padding-left: 0.8vh; padding-right: 0.8vh">
+            <hr style="padding: 0; margin: 0; margin-top: 0.4vh"/>
+            <table style="text-align: center; width: 100%">
+                <tr>
+                    <td style="font-size: 4vh;">
+                        Backend URL
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width: 100%">
+                        <input 
+                            type="text" id="backendURLInput"
+                            style="font-size: 4vh; background-color: #464646; border: 1px solid grey; color: white; width: 100%"
+                            value=${backendURL}
+                        >
+                    </td>
+                </tr>
+                <tr>
+                    <td style="float: left">
+                        <span>
+                            <button id="testBackendURL" style="font-size: 3.8vh; width: 14vh">
+                                Test
+                            </button>   
+                        </span>
+                        <span id="testBackendStatus" style="font-size: 4vh;">
+                            
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </div>   
+        `
+
+        document.getElementById("testBackendURL").addEventListener("click", (event) => {
+            const newURLString = document.getElementById("backendURLInput").value;
+            try {
+                const testURL = new URL(newURLString)
+            } catch (_) {
+                document.getElementById("testBackendStatus").textContent = "Nope"
+                return
+            }
+        
+            fetch(`${newURLString}/status`, {
+                method: 'POST'
+            })
+            .then((res) => res.json())
+            .then((data) => JSON.parse(data))
+            .then((data) => {
+                if (data.status == "operational") {
+                    document.getElementById("testBackendStatus").textContent = "Working :)"
+                    setBackendURL(newURLString)
+                } else {
+                    console.log("invalid response")
+                    document.getElementById("testBackendStatus").textContent = "Nope"
+                }
+            }, (err) => {
+                console.log("err response")
+                document.getElementById("testBackendStatus").textContent = "Nope"
+            });
+        });
     })
-    .then((res) => res.json())
-    .then((data) => JSON.parse(data))
-    .then((data) => {
-        if (data.status == "operational") {
-            document.getElementById("testBackendStatus").textContent = "Working :)"
-            setBackendURL(newURLString)
-        } else {
-            console.log("invalid response")
-            document.getElementById("testBackendStatus").textContent = "Nope"
-        }
-    }, (err) => {
-        console.log("err response")
-        document.getElementById("testBackendStatus").textContent = "Nope"
-    });
-});
+
+}
+
+// document.getElementById("testBackendURL").addEventListener("click", (event) => {
+//     const newURLString = document.getElementById("backendURLInput").value;
+//     try {
+//         const testURL = new URL(newURLString)
+//     } catch (_) {
+//         document.getElementById("testBackendStatus").textContent = "Nope"
+//         return
+//     }
+
+//     fetch(`${newURLString}/status`, {
+//         method: 'POST'
+//     })
+//     .then((res) => res.json())
+//     .then((data) => JSON.parse(data))
+//     .then((data) => {
+//         if (data.status == "operational") {
+//             document.getElementById("testBackendStatus").textContent = "Working :)"
+//             setBackendURL(newURLString)
+//         } else {
+//             console.log("invalid response")
+//             document.getElementById("testBackendStatus").textContent = "Nope"
+//         }
+//     }, (err) => {
+//         console.log("err response")
+//         document.getElementById("testBackendStatus").textContent = "Nope"
+//     });
+// });
 
 function setBackendURL(URL) {
     browser.storage.local.set({

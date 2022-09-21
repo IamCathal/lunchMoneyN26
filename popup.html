@@ -20,6 +20,10 @@
             input:focus {
                 outline: none;
             }
+            #settingsButton {
+                background-color: #141314;
+                color: white;
+            }
 
             .skeleton {
                 opacity: 0.6;
@@ -44,7 +48,7 @@
 
             <div style="text-align: center; padding: 1vh">
                 <a href="" style="text-decoration: none; color: white" id="importTransactionsButton">
-                    <div style="font-weight: bold; font-size: 7vh; display: inline; border: 2px solid grey; padding: 0.2vh 2vh 0.2vh 2vh; border-top-right-radius: 3vh; border-bottom-left-radius: 3vh;">
+                    <div style="font-weight: bold; font-size: 1rem; display: inline; border: 2px solid grey; padding: 0.2vh 2vh 0.2vh 2vh; border-top-right-radius: 3vh; border-bottom-left-radius: 3vh;">
                         Import Transactions
                     </div>
                 </a>    
@@ -56,11 +60,11 @@
                 </div>
 
                 <div style="text-align: center; margin-bottom: 0.0">
-                    <p style="font-size: 5vh ;padding: 0; margin: 0">Recent Imports</p>
+                    <p style="font-size: 0.8rem ;padding: 0; margin: 0">Recent Imports</p>
                 </div>
                 <div style="text-align: center; margin-bottom: 0vh">
                     <table>
-                        <tr style="font-size: 4vh; text-align: center">
+                        <tr style="font-size: 0.6rem; text-align: center">
                             <td style="width: 15%">
                                 
                             </td>
@@ -85,16 +89,16 @@
                 
             </div>
 
-            <div style="padding-top: 0; padding-bottom: 0;">
+            <div style="padding-top: 0; padding-bottom: 0; margin-bottom: 0.4rem">
                 <div style="display: inline; padding-top: 0.7vh; margin-left: 0.9vh; text-align: right">
-                    <p style="display: inline; font-size: 4vh ;padding: 0; margin: 0">
+                    <p style="display: inline; font-size: 0.8rem; padding: 0; margin: 0">
                         <img
                             src="https://i.imgur.com/3Ktp7tL.png"
                             width="3%"
                             style="margin-top: 0.3vh"
                             id="onlineStatusIndicator"
                         >
-                        <span id="onlineStatusText" style=" font-size: 4vh; margin-bottom: 0.3vh">
+                        <span id="onlineStatusText" style=" font-size: 0.6rem; margin-bottom: 0.3vh">
 
                         </span>
                     </p>
@@ -102,69 +106,21 @@
               
                 <div style="display: inline; padding-top: 0.5vh; padding-right: 0.9vh">
                     <span>
-                        <div style="display: inline; width: 40%; font-size: 4vh ; padding: 0; margin: 0">
+                        <div style="display: inline; width: 40%; font-size: 0.6rem; padding: 0; margin: 0">
                             Uptime: <span id="upTime"></span>
                         </div>
                     </span>
                 </div>
-                <div style="display: inline; float: right; padding-top: 0.5vh; padding-right: 0.9vh">
-                    <div id="settingsButton" style="display: inline; width: 40%; font-size: 4vh ; padding: 0; margin: 0">
-                        settings
-                    </div>
+                <div style="display: inline; float: right; padding-top: 0.2rem; padding-right: 0.3rem">
+                    <button id="settingsButton" style="font-size: 0.2rem;">
+                        Settings
+                    </button>  
                 </div>
-                
-                <!-- <span>
-                    <div style="border: 2px solid black; width: 40%; text-align: center; margin-bottom: 0vh">
-                        <p style="display: inline; font-size: 1.2vh ;padding: 0; margin: 0">
-                            <img
-                                src="https://i.imgur.com/3Ktp7tL.png"
-                                width="5%"
-                                id="onlineStatusIndicator"
-                            >
-                            <span id="onlineStatusText">
-    
-                            </span>
-                        </p>
-                    </div>
-                </span>
-                <span>
-                    <div style="display: inline; width: 40%; font-size: 1.2vh ; padding: 0; margin: 0">
-                        Uptime: <span id="upTime"></span>
-                    </div>
-                </span> -->
             </div>
 
-            <div style="padding-top: 0; padding-bottom: 0; padding-left: 0.8vh; padding-right: 0.8vh">
-                <hr style="padding: 0; margin: 0; margin-top: 0.4vh"/>
-                <table style="text-align: center; width: 100%">
-                    <tr>
-                        <td style="font-size: 4vh;">
-                            Backend URL
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="width: 100%">
-                            <input 
-                                type="text" id="backendURLInput"
-                                style="font-size: 4vh; background-color: #464646; border: 1px solid grey; color: white; width: 100%"
-                            >
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="float: left">
-                            <span>
-                                <button id="testBackendURL" style="font-size: 3.8vh; width: 14vh">
-                                    Test
-                                </button>   
-                            </span>
-                            <span id="testBackendStatus" style="font-size: 4vh;">
-                                
-                            </span>
-                        </td>
-                    </tr>
-                </table>
-            </div>
+            <div id="settingsPanel">
 
+            </div>
 
         </div>
 
