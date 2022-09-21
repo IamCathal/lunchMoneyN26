@@ -11,6 +11,15 @@ window.onload = function() {
     })
 
     // browser.storage.local.set({
+    //     "transactions": ""
+    // }).then(() => {
+    //     console.log("Successfully set new transactions")
+    //     fillInRecentTransactions()
+    // }, (err) => {
+    //     console.error(`Failed to set new transactions: ${err}`)
+    // })
+
+    // browser.storage.local.set({
     //     "transactions": [
     //         {
     //             "n26FoundTransactions": 4,
@@ -150,7 +159,8 @@ document.getElementById("importTransactionsButton").addEventListener("click", fu
     e.preventDefault();
 
     getStorageVariable("backendURL").then((backendURL) => {
-        const ws = new WebSocket(`ws://${backendURL.host}/ws/transactions?days=12`);
+        const backendURLObject = new URL(backendURL)
+        const ws = new WebSocket(`ws://${backendURLObject.host}/ws/transactions?days=12`);
 
         ws.onopen = function(e) {
             console.log("[open] Connection established");
@@ -193,6 +203,30 @@ function handleNewWsMessage(event) {
     }
     else if (res.msg == "transaction finished") {
         document.getElementById("savingSummaryIcon").classList.remove("skeleton");
+        console.log(res)
+        const newTransaction = res.summarystats;
+
+        getStorageVariable("transactions").then((transactions) => {
+            if (!Array.isArray(transactions)) {
+                transactions = []
+            }
+            transactions.unshift(newTransaction)
+            console.log(`New transaction list:`)
+            console.log(transactions)
+
+            browser.storage.local.set({
+                "transactions": transactions
+            }).then(() => {
+                console.log("Successfully set new transactions")
+                fillInRecentTransactions()
+            }, (err) => {
+                console.error(`Failed to set new transactions: ${err}`)
+            })
+
+        }, (err) => {
+            console.error(err)
+        })
+        
     }
 }
 
@@ -481,7 +515,7 @@ function getStorageVariable(variable) {
     return new Promise((resolve, reject) => {
         browser.storage.local.get(variable).then(
             (res) => {
-                console.log(`Retrieved: ${res[variable]}`)
+                console.log(`Retrieved: ${res[variable]} from get ${variable}`)
                 resolve(res[variable])
             }, (err) => {
                 console.eror(`failed to get ${variable}`)
