@@ -8,7 +8,11 @@ Import and filter transaction data directly from [N26](https://n26.com) account 
   -webserver
         Run the application as a webserver
 ```
-The application can either be run locally to manually execute the flow one request at a time or as a webserver that can be called from browser extension in the future to import transactions easily.
+
+The application is meant to be run in one of two ways.
+
+1. Execute a binary on your local computer that retrieves transactions from N26 and inserts them into LunchMoney with some terminal output. (standalone mode)
+2. With the browser extension installed on any (desktop) device and the application running as a webserver on a trusted machine you can execute this flow from anywhere and get some nice UI. (webserver mode)
 
 When running the application 'locally' both flags are required to be set. When running the application as a web server only the webserver flag needs to be set.
 
@@ -29,3 +33,9 @@ All of the following variables must be set in a `.env` file placed at the root o
 | `N26_DEVICE_TOKEN`   | A random UUIDV4. Can easily be generated [here](https://www.uuidgenerator.net/)      |
 | `LUNCHMONEY_TOKEN`   | API token to access your lunch money account which can be retrieved [here](https://my.lunchmoney.app/developers)      |
 | `API_PORT`   | API port to be used when in webserver mode     |
+
+## Security
+
+* How can I trust this if I have to give it my login details for N26?
+
+When using this project in either as a webserver or locally your login credentials only need to be persisted through a `.env` file thats saved locally. The [Guitmz/n26](https://github.com/guitmz/n26) package (outside of ensuring they're set) is the only piece of code that accesses them when it interacts with N26. I've gone through every line of that codebase myself and you should too. I'm not planning on updating many dependencies without checking all changes again. Please also read all of the code in this project while you're at it. The backend is quite simple (just uses gorilla mux for hosting a webserver) on purpose.
