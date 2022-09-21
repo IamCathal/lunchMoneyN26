@@ -9,45 +9,8 @@ window.onload = function() {
     checkStatus().then((res) => {
         setInterval(checkStatus, 10000)
     })
-
-    // browser.storage.local.set({
-    //     "transactions": ""
-    // }).then(() => {
-    //     console.log("Successfully set new transactions")
-    //     fillInRecentTransactions()
-    // }, (err) => {
-    //     console.error(`Failed to set new transactions: ${err}`)
-    // })
-
-    // browser.storage.local.set({
-    //     "transactions": [
-    //         {
-    //             "n26FoundTransactions": 4,
-    //             "lunchMoneyInseredTransactions": 3,
-    //             "daysLookedUp": 2,
-    //             "currTime": 1663182596930
-    //         },
-    //         {
-    //             "n26FoundTransactions": 12,
-    //             "lunchMoneyInseredTransactions": 9,
-    //             "daysLookedUp": 9,
-    //             "currTime": 1663182596930
-    //         }]
-    // }).then((res) => {
-    //     console.log("Successfully set transactions")
-    //     console.log(res)
-    // }, (err) => {
-    //     console.error(`Failed to set transactions: ${err}`)
-    // })
-
     giveSwayaaangBordersToSettingsButton()
     fillInRecentTransactions()
-
-    // getStorageVariable("backendURL").then((res) => {
-    //     console.log(`YIpeee: ${res}`)
-    // }, (err) => {
-    //     console.log("failed to get backendURL")
-    // })
 }
 
 function giveSwayaaangBordersToSettingsButton() {
@@ -84,9 +47,7 @@ function getMostRecentTransactions(numTransactions) {
             reject(err)
         })
     })
-   
 }
-
 
 function fillInRecentTransactions() {
     let outputHTML = "";
@@ -157,14 +118,11 @@ function fillInRecentTransactions() {
 
 document.getElementById("importTransactionsButton").addEventListener("click", function(e){
     e.preventDefault();
-
     getStorageVariable("backendURL").then((backendURL) => {
         const backendURLObject = new URL(backendURL)
         const ws = new WebSocket(`ws://${backendURLObject.host}/ws/transactions?days=12`);
 
         ws.onopen = function(e) {
-            console.log("[open] Connection established");
-            console.log("Sending to server");
             createRequestStatusBox()
         };
 
@@ -176,14 +134,12 @@ document.getElementById("importTransactionsButton").addEventListener("click", fu
             if (event.wasClean) {
                 console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
             } else {
-                // e.g. server process killed or network down
-                // event.code is usually 1006 in this case
                 console.log('[close] Connection died');
             }
             hideCreateStatusRequestBox() 
         };
         }, (err) => {
-            console.log("failed to get backendURL")
+            console.error(`failed to get backendURL: ${err}`)
     })
 });
 
@@ -203,7 +159,6 @@ function handleNewWsMessage(event) {
     }
     else if (res.msg == "transaction finished") {
         document.getElementById("savingSummaryIcon").classList.remove("skeleton");
-        console.log(res)
         const newTransaction = res.summarystats;
 
         getStorageVariable("transactions").then((transactions) => {
@@ -222,11 +177,9 @@ function handleNewWsMessage(event) {
             }, (err) => {
                 console.error(`Failed to set new transactions: ${err}`)
             })
-
         }, (err) => {
             console.error(err)
         })
-        
     }
 }
 
@@ -274,8 +227,8 @@ function checkStatus() {
 function createRequestStatusBox() {
     console.log("opening")
     document.getElementById("requestStatusBox").innerHTML = `
-    <div style="text-align: center; margin-bottom: 0.0; border: 1px solid grey">
-            <table style="font-size: 1.2vh">
+    <div style="text-align: center; margin-bottom: 0.0; margin-top: 0.3rem; border: 1px solid grey">
+            <table style="font-size: 0.75rem">
                 <tr>
                     <td>
                         <span style="margin-left: 0.5vh; margin-right: 0.5vh">
@@ -341,31 +294,6 @@ function hideCreateStatusRequestBox() {
     console.log("closing")
     document.getElementById("requestStatusBox").innerHTML = ``;
 }
-
-// // https://bobbyhadz.com/blog/javascript-convert-milliseconds-to-hours-minutes-seconds
-// // I will not write this myself. there is no point
-// function convertMsToTime(milliseconds) {
-//     let seconds = Math.floor(milliseconds / 1000);
-//     let minutes = Math.floor(seconds / 60);
-//     let hours = Math.floor(minutes / 60);
-//     let days = Math.floor(hours/24)
-
-//     seconds = seconds % 60;
-//     minutes = minutes % 60;
-//     hours = hours % 24;
-//     days = hours % 24
-
-//     if (days >= 1) {
-//         return `${days}d`;
-//     }
-//     if (hours >= 1) {
-//         return `${hours}h`;
-//     }
-//     if (minutes >= 1) {
-//         return `${minutes}m`;
-//     }
-//     return `${seconds}s`;
-// }
 
 // https://stackoverflow.com/a/3177838
 // no point in rewriting this
@@ -441,7 +369,6 @@ function settingsPanelButtonClicked() {
             </table>
         </div>   
         `
-
         document.getElementById("testBackendURL").addEventListener("click", (event) => {
             const newURLString = document.getElementById("backendURLInput").value;
             try {
@@ -472,34 +399,6 @@ function settingsPanelButtonClicked() {
     })
 
 }
-
-// document.getElementById("testBackendURL").addEventListener("click", (event) => {
-//     const newURLString = document.getElementById("backendURLInput").value;
-//     try {
-//         const testURL = new URL(newURLString)
-//     } catch (_) {
-//         document.getElementById("testBackendStatus").textContent = "Nope"
-//         return
-//     }
-
-//     fetch(`${newURLString}/status`, {
-//         method: 'POST'
-//     })
-//     .then((res) => res.json())
-//     .then((data) => JSON.parse(data))
-//     .then((data) => {
-//         if (data.status == "operational") {
-//             document.getElementById("testBackendStatus").textContent = "Working :)"
-//             setBackendURL(newURLString)
-//         } else {
-//             console.log("invalid response")
-//             document.getElementById("testBackendStatus").textContent = "Nope"
-//         }
-//     }, (err) => {
-//         console.log("err response")
-//         document.getElementById("testBackendStatus").textContent = "Nope"
-//     });
-// });
 
 function setBackendURL(URL) {
     browser.storage.local.set({
