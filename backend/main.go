@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -74,7 +74,7 @@ func uploadTransactions(transactions uploadTransactionsDTO) lunchMoneyInsertTran
 	if err != nil {
 		panic(err)
 	}
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		panic(err)
 	}

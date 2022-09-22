@@ -167,13 +167,6 @@ func ensureAllEnvVarsAreSet() {
 	}
 }
 
-func getEnvVarOrDefault(varName, defaultVal string) string {
-	if isSet := envVarIsSet(varName); isSet {
-		return os.Getenv(varName)
-	}
-	return defaultVal
-}
-
 func envVarIsSet(varName string) bool {
 	if _, exists := os.LookupEnv(varName); exists {
 		return true
