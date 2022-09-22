@@ -11,6 +11,19 @@ import (
 	"github.com/guitmz/n26"
 )
 
+func isAuthRequiredEndpoint(urlPath string) bool {
+	authRequiredEndpoint := make(map[string]bool)
+	authRequiredEndpoint["/transactions"] = true
+	authRequiredEndpoint["/ws/transactions"] = true
+
+	requiresAuth := authRequiredEndpoint[urlPath]
+	return requiresAuth
+}
+
+func verifyPassword(password string) bool {
+	return password == config.APIPassword
+}
+
 func getClientWithProgressOutput() *n26.Client {
 	authenticatedInApp := false
 	waitTimeRemaining := 300
@@ -119,6 +132,20 @@ func logMiddleware(next http.Handler) http.Handler {
 		if (*r).Method == "OPTIONS" {
 			return
 		}
+		if isAuthRequiredEndpoint(r.URL.Path) {
+			if !verifyPassword(r.Header.Get("API_PASSWORD")) {
+				fmt.Printf("ip: %s with user-agent: %s wasn't authorized to access %s. Attempted to use API_PASSWORD: %s",
+					r.RemoteAddr, r.Header.Get("User-Agent"), r.URL.Path, r.Header.Get("API_PASSWORD"))
+				w.WriteHeader(http.StatusForbidden)
+				response := struct {
+					Error string `json:"error"`
+				}{
+					"You are not authorized to access this endpoint",
+				}
+				json.NewEncoder(w).Encode(response)
+				return
+			}
+		}
 		fmt.Printf("%v %+v\n", time.Now().Format(time.RFC3339), r)
 		next.ServeHTTP(w, r)
 	})
@@ -130,6 +157,7 @@ func ensureAllEnvVarsAreSet() {
 		"N26_PASSWORD",
 		"N26_DEVICE_TOKEN",
 		"LUNCHMONEY_TOKEN",
+		"API_PASSWORD",
 	}
 
 	for _, envVar := range requiredEnvVars {

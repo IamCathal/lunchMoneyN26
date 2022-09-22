@@ -10,6 +10,7 @@ type appConfig struct {
 	n26Password     string
 	n26DeviceToken  string
 	lunchMoneyToken string
+	APIPassword     string
 
 	// Only to be used when the application
 	// is running in offline mode

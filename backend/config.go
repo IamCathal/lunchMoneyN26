@@ -26,6 +26,7 @@ func initConfig(args []string) {
 		n26Password:     os.Getenv("N26_PASSWORD"),
 		n26DeviceToken:  os.Getenv("N26_DEVICE_TOKEN"),
 		lunchMoneyToken: os.Getenv("LUNCHMONEY_TOKEN"),
+		APIPassword:     os.Getenv("API_PASSWORD"),
 
 		days: 0,
 	}
