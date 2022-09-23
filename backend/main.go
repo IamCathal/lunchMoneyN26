@@ -86,12 +86,17 @@ func uploadTransactions(transactions uploadTransactionsDTO) lunchMoneyInsertTran
 	return transactionIDs
 }
 
-func runWebServer() {
+func setupRouter() *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/status", Status).Methods("POST")
 	r.HandleFunc("/transactions", Transactions).Methods("POST")
 	r.HandleFunc("/ws/transactions", wsTransactions).Methods("GET")
 	r.Use(logMiddleware)
+	return r
+}
+
+func runWebServer() {
+	r := setupRouter()
 
 	srv := &http.Server{
 		Handler:      r,
