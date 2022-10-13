@@ -13,6 +13,7 @@ import (
 
 func isAuthRequiredEndpoint(urlPath string) bool {
 	authRequiredEndpoint := make(map[string]bool)
+	authRequiredEndpoint["/status"] = true
 	authRequiredEndpoint["/transactions"] = true
 	authRequiredEndpoint["/ws/transactions"] = true
 
@@ -130,12 +131,15 @@ func logMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		SetupCORS(&w, r)
 		if (*r).Method == "OPTIONS" {
+			fmt.Println("its one of those")
 			return
 		}
 		if isAuthRequiredEndpoint(r.URL.Path) {
-			if !verifyPassword(r.Header.Get("API_PASSWORD")) {
-				fmt.Printf("ip: %s with user-agent: %s wasn't authorized to access %s. Attempted to use API_PASSWORD: %s",
-					r.RemoteAddr, r.Header.Get("User-Agent"), r.URL.Path, r.Header.Get("API_PASSWORD"))
+			fmt.Println("auth is requred for this endpoint " + r.URL.Path)
+			if !verifyPassword(r.Header.Get("API_KEY")) {
+				fmt.Println("password '" + r.Header.Get("API_KEY") + "' didnt cut the mustard")
+				fmt.Printf("ip: %s with user-agent: '%s' wasn't authorized to access %s. Attempted to use API_KEY: '%s'\n",
+					r.RemoteAddr, r.Header.Get("User-Agent"), r.URL.Path, r.Header.Get("API_KEY"))
 				w.WriteHeader(http.StatusForbidden)
 				response := struct {
 					Error string `json:"error"`
@@ -145,6 +149,7 @@ func logMiddleware(next http.Handler) http.Handler {
 				json.NewEncoder(w).Encode(response)
 				return
 			}
+			fmt.Println("password " + r.Header.Get("API_KEY") + " worked")
 		}
 		fmt.Printf("%v %+v\n", time.Now().Format(time.RFC3339), r)
 		next.ServeHTTP(w, r)
@@ -157,7 +162,7 @@ func ensureAllEnvVarsAreSet() {
 		"N26_PASSWORD",
 		"N26_DEVICE_TOKEN",
 		"LUNCHMONEY_TOKEN",
-		"API_PASSWORD",
+		"API_KEY",
 	}
 
 	for _, envVar := range requiredEnvVars {
@@ -194,4 +199,7 @@ func SetupCORS(w *http.ResponseWriter, req *http.Request) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	(*w).Header().Set("Access-Control-Allow-Credentials", "true")
+	(*w).Header().Set("Access-Control-Allow-Headers", "API_KEY")
+	fmt.Println("setup CORS")
 }

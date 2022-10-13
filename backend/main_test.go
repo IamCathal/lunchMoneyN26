@@ -14,7 +14,7 @@ import (
 
 var (
 	SERVER_URL_BASE = "http://localhost:9049"
-	API_PASSWORD    = "expectedAPIPassword"
+	API_KEY         = "expectedAPIPassword"
 )
 
 func TestMain(m *testing.M) {
@@ -24,7 +24,7 @@ func TestMain(m *testing.M) {
 }
 
 func setupProps() {
-	os.Setenv("API_PASSWORD", API_PASSWORD)
+	os.Setenv("API_KEY", API_KEY)
 }
 
 func runTestWebServer(ctx context.Context) {
@@ -49,7 +49,7 @@ func TestGetAPIStatus(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	req.Header.Set("API_PASSWORD", API_PASSWORD)
+	req.Header.Set("API_KEY", API_KEY)
 
 	res, err := client.Do(req)
 	if err != nil {
