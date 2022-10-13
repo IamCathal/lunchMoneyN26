@@ -72,6 +72,8 @@ func isAuthRequiredEndpoint(urlPath string) bool {
 }
 
 func verifyPassword(r *http.Request) bool {
+	// Websockets don't really allow the use
+	// of headers
 	if isWsRequest := strings.HasPrefix(r.URL.Path, "/ws/"); isWsRequest {
 		apiKey := r.URL.Query().Get("apikey")
 		return apiKey == appConfig.APIPassword

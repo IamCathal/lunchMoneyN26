@@ -85,6 +85,40 @@ func TestGetAPIStatusReturnsStatusForbiddenWhenIncorrectAPIKeyIsGiven(t *testing
 	assert.Equal(t, string(body), statusForbiddenResponse)
 }
 
+func TestStatusEndpointShouldAlwaysRequireAuth(t *testing.T) {
+	assert.Equal(t, isAuthRequiredEndpoint("/status"), true)
+}
+
+func TestTransactionsEndpointShouldAlwaysRequireAuth(t *testing.T) {
+	assert.Equal(t, isAuthRequiredEndpoint("/transactions"), true)
+}
+
+func TestWsTransactionsEndpointShouldAlwaysRequireAuth(t *testing.T) {
+	assert.Equal(t, isAuthRequiredEndpoint("/ws/transactions"), true)
+}
+
+func TestVerifyPasswordThroughHeaders(t *testing.T) {
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/status", SERVER_URL_BASE), nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	req.Header.Set("API_KEY", TESTING_API_KEY)
+
+	assert.Equal(t, verifyPassword(req), true)
+}
+
+func TestVerifyPasswordThroughQueryParameters(t *testing.T) {
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/ws/transactions", SERVER_URL_BASE), nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	queryParams := req.URL.Query()
+	queryParams.Add("apikey", TESTING_API_KEY)
+	req.URL.RawQuery = queryParams.Encode()
+
+	assert.Equal(t, verifyPassword(req), true)
+}
+
 func setupAppConfig() {
 	appConfig := dtos.AppConfig{
 		APIPassword: TESTING_API_KEY,
