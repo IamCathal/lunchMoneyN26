@@ -2,7 +2,9 @@ package endpoints
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -17,20 +19,22 @@ import (
 var (
 	SERVER_URL_BASE = "http://localhost:9049"
 	TESTING_API_KEY = "expectedAPIPassword"
+
+	statusForbiddenResponse string
 )
 
 func TestMain(m *testing.M) {
 	setupAppConfig()
-	code := m.Run()
-	os.Exit(code)
-}
+	setupData()
 
-func setupAppConfig() {
-	appConfig := dtos.AppConfig{
-		APIPassword: TESTING_API_KEY,
-	}
-	SetConfig(appConfig)
-	util.SetConfig(appConfig)
+	ctx, cancel := context.WithCancel(context.Background())
+	go runTestWebServer(ctx)
+	time.Sleep(2 * time.Millisecond)
+
+	code := m.Run()
+
+	cancel()
+	os.Exit(code)
 }
 
 func runTestWebServer(ctx context.Context) {
@@ -44,12 +48,7 @@ func runTestWebServer(ctx context.Context) {
 	log.Fatal(srv.ListenAndServe())
 }
 
-func TestGetAPIStatus(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	go runTestWebServer(ctx)
-	time.Sleep(2 * time.Millisecond)
-
+func TestGetAPIStatusReturnsStatusWhenCorrectAPIKeyIsGiven(t *testing.T) {
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", fmt.Sprint(SERVER_URL_BASE+"/status"), nil)
 	if err != nil {
@@ -63,4 +62,46 @@ func TestGetAPIStatus(t *testing.T) {
 	}
 
 	assert.Equal(t, res.StatusCode, 200)
+}
+
+func TestGetAPIStatusReturnsStatusForbiddenWhenIncorrectAPIKeyIsGiven(t *testing.T) {
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", fmt.Sprint(SERVER_URL_BASE+"/status"), nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	req.Header.Set("API_KEY", "incorrect API key")
+
+	res, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	assert.Equal(t, res.StatusCode, http.StatusForbidden)
+	assert.Equal(t, string(body), statusForbiddenResponse)
+}
+
+func setupAppConfig() {
+	appConfig := dtos.AppConfig{
+		APIPassword: TESTING_API_KEY,
+	}
+	SetConfig(appConfig)
+	util.SetConfig(appConfig)
+}
+
+func setupData() {
+	statusForbiddenResponseStruct := struct {
+		Error string `json:"error"`
+	}{
+		"You are not authorized to access this endpoint",
+	}
+	bytes, err := json.Marshal(&statusForbiddenResponseStruct)
+	if err != nil {
+		panic(err)
+	}
+	statusForbiddenResponse = string(bytes) + "\n"
 }
