@@ -69,7 +69,6 @@ func getClient() *n26.Client {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("auth complete")
 	return newClient
 }
 
@@ -131,13 +130,10 @@ func logMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		SetupCORS(&w, r)
 		if (*r).Method == "OPTIONS" {
-			fmt.Println("its one of those")
 			return
 		}
 		if isAuthRequiredEndpoint(r.URL.Path) {
-			fmt.Println("auth is requred for this endpoint " + r.URL.Path)
 			if !verifyPassword(r.Header.Get("API_KEY")) {
-				fmt.Println("password '" + r.Header.Get("API_KEY") + "' didnt cut the mustard")
 				fmt.Printf("ip: %s with user-agent: '%s' wasn't authorized to access %s. Attempted to use API_KEY: '%s'\n",
 					r.RemoteAddr, r.Header.Get("User-Agent"), r.URL.Path, r.Header.Get("API_KEY"))
 				w.WriteHeader(http.StatusForbidden)
@@ -149,7 +145,6 @@ func logMiddleware(next http.Handler) http.Handler {
 				json.NewEncoder(w).Encode(response)
 				return
 			}
-			fmt.Println("password " + r.Header.Get("API_KEY") + " worked")
 		}
 		fmt.Printf("%v %+v\n", time.Now().Format(time.RFC3339), r)
 		next.ServeHTTP(w, r)
@@ -181,7 +176,6 @@ func envVarIsSet(varName string) bool {
 
 func getMinutesAndSecondsLeft(totalSeconds int) string {
 	totalMinutesLeft, secondsLeftRemainder := divmod(totalSeconds, 60)
-
 	if totalMinutesLeft != 0 {
 		return fmt.Sprintf("%dm %ds", totalMinutesLeft, secondsLeftRemainder)
 	} else {
@@ -198,8 +192,6 @@ func divmod(big, little int) (int, int) {
 func SetupCORS(w *http.ResponseWriter, req *http.Request) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, API_KEY")
 	(*w).Header().Set("Access-Control-Allow-Credentials", "true")
-	(*w).Header().Set("Access-Control-Allow-Headers", "API_KEY")
-	fmt.Println("setup CORS")
 }

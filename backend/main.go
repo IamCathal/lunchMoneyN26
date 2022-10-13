@@ -88,7 +88,6 @@ func uploadTransactions(transactions uploadTransactionsDTO) lunchMoneyInsertTran
 
 func setupRouter() *mux.Router {
 	r := mux.NewRouter()
-	r.HandleFunc("/online", Online).Methods("POST", "OPTIONS")
 	r.HandleFunc("/status", Status).Methods("POST", "OPTIONS")
 	r.HandleFunc("/transactions", Transactions).Methods("POST")
 	r.HandleFunc("/ws/transactions", wsTransactions).Methods("GET")
