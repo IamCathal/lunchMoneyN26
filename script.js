@@ -1,13 +1,10 @@
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 ];
-
 let settingsPanelIsVisible = false;
 
 window.onload = function() {
-    console.log("LOADED UP BAI")
     giveSwayaaangBordersToSettingsButton()
-
     initVariablesIfNotSet()
 
     checkStatus().then((res) => {
@@ -17,19 +14,16 @@ window.onload = function() {
 }
 
 function initVariablesIfNotSet() {
-    console.log("Init vars function")
     getStorageVariable("transactions").then((transactions) => {
         if (!Array.isArray(transactions)) {
-            transactions = []
+            let transactionsArr = []
             browser.storage.local.set({
-                "transactions": transactions
+                "transactions": transactionsArr
             }).then(() => {
                 console.log("Successfully set empty transactions")
             }, (err) => {
                 console.error(`Failed to set empty transactions: ${err}`)
             })
-        } else {
-            console.log("Transactions is already set")
         }
     }, (err) => {
         console.error(`failed to get transactions: ${err}`)
@@ -43,8 +37,6 @@ function initVariablesIfNotSet() {
             }, (err) => {
                 console.error(`Failed to set empty backendURL: ${err}`)
             })
-        } else {
-            console.log("backendURL is already set")
         }
     }, (err) => {
         console.error(`failed to get backendURL: ${err}`)
@@ -77,7 +69,7 @@ function getMostRecentTransactions(numTransactions) {
     return new Promise((resolve, reject) => {
         getStorageVariable("transactions", []).then((res) => {
             if (res == undefined) {
-                console.log("its undefined")
+                resolve([])
             }
             if (res.length >= numTransactions) {
                 resolve(res.slice(numTransactions))
@@ -100,6 +92,7 @@ function fillInRecentTransactions() {
             let dateAtBeginningOfScan = new Date(curr.currTime);
             dateAtBeginningOfScan = new Date(dateAtBeginningOfScan.setDate(dateAtBeginningOfScan.getDate() - curr.daysLookedUp))
     
+            // Add a bottom margin if its not the last element
             const bottomMargin = i == (transactions.length - 1) ? '' : 'margin-bottom: 0.3rem;';
     
             outputHTML += `
@@ -159,9 +152,9 @@ function fillInRecentTransactions() {
 
 document.getElementById("importTransactionsButton").addEventListener("click", function(e){
     e.preventDefault();
-    getStorageVariable("backendURL").then((backendURL) => {
-        const backendURLObject = new URL(backendURL)
-        const ws = new WebSocket(`ws://${backendURLObject.host}/ws/transactions?days=12`);
+    getBackendUrlAndApiKey().then((info) => {
+        const backendURLObject = new URL(info.backendURL)
+        const ws = new WebSocket(`ws://${backendURLObject.host}/ws/transactions?days=12&apikey=${info.apiKey}`);
 
         ws.onopen = function(e) {
             createRequestStatusBox()

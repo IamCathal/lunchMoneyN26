@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -21,8 +22,12 @@ func isAuthRequiredEndpoint(urlPath string) bool {
 	return requiresAuth
 }
 
-func verifyPassword(password string) bool {
-	return password == config.APIPassword
+func verifyPassword(r *http.Request) bool {
+	if isWsRequest := strings.HasPrefix(r.URL.Path, "/ws/"); isWsRequest {
+		apiKey := r.URL.Query().Get("apikey")
+		return apiKey == config.APIPassword
+	}
+	return r.Header.Get("API_KEY") == config.APIPassword
 }
 
 func getClientWithProgressOutput() *n26.Client {
@@ -133,7 +138,7 @@ func logMiddleware(next http.Handler) http.Handler {
 			return
 		}
 		if isAuthRequiredEndpoint(r.URL.Path) {
-			if !verifyPassword(r.Header.Get("API_KEY")) {
+			if !verifyPassword(r) {
 				fmt.Printf("ip: %s with user-agent: '%s' wasn't authorized to access %s. Attempted to use API_KEY: '%s'\n",
 					r.RemoteAddr, r.Header.Get("User-Agent"), r.URL.Path, r.Header.Get("API_KEY"))
 				w.WriteHeader(http.StatusForbidden)
