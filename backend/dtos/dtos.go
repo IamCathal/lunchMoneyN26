@@ -1,38 +1,41 @@
-package main
+package dtos
 
 import "time"
 
-type appConfig struct {
-	webServer bool
-	port      int
+type AppConfig struct {
+	WebServer bool
+	Port      int
 
-	n26Username     string
-	n26Password     string
-	n26DeviceToken  string
-	lunchMoneyToken string
+	N26Username     string
+	N26Password     string
+	N26DeviceToken  string
+	LunchMoneyToken string
 	APIPassword     string
 
 	// Only to be used when the application
 	// is running in offline mode
-	days int
+	Days int
+
+	// Global variables
+	ApplicationStartUpTime time.Time
 }
 
 // UptimeResponse is the standard response
 // for any service's /status endpoint
-type uptimeResponse struct {
+type UptimeResponse struct {
 	Status      string        `json:"status,omitempty"`
 	Uptime      time.Duration `json:"uptime,omitempty"`
 	StartUpTime int64         `json:"startuptime,omitempty"`
 }
 
-type uploadTransactionsDTO struct {
-	Transactions      []filteredTransaction `json:"transactions"`
+type UploadTransactionsDTO struct {
+	Transactions      []FilteredTransaction `json:"transactions"`
 	ApplyRules        bool                  `json:"apply_rules"`
 	SkipDuplicates    bool                  `json:"skip_duplicates"`
 	CheckForRecurring bool                  `json:"check_for_recurring"`
 }
 
-type filteredTransaction struct {
+type FilteredTransaction struct {
 	ID       string  `json:"id"`
 	Date     string  `json:"date"`
 	Payee    string  `json:"payee"`
@@ -41,17 +44,17 @@ type filteredTransaction struct {
 	Category string  `json:"category"`
 }
 
-type lunchMoneyInsertTransactionResponse struct {
+type LunchMoneyInsertTransactionResponse struct {
 	IDs []int `json:"ids"`
 }
 
-type websocketMessage struct {
+type WebsocketMessage struct {
 	Msg          string             `json:"msg"`
 	Finished     bool               `json:"finished"`
-	SummaryStats wsTransactionStats `json:"summarystats,omitempty"`
+	SummaryStats WsTransactionStats `json:"summarystats,omitempty"`
 }
 
-type wsTransactionStats struct {
+type WsTransactionStats struct {
 	N26FoundTransactions           int       `json:"n26FoundTransactions"`
 	LunchMoneyInsertedTranscations int       `json:"lunchMoneyInseredTransactions"`
 	DaysLookedUp                   int       `json:"daysLookedUp"`

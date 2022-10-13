@@ -1,4 +1,4 @@
-package main
+package endpoints
 
 import (
 	"context"
@@ -9,26 +9,32 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/iamcathal/lunchMoneyN26/dtos"
+	"github.com/iamcathal/lunchMoneyN26/util"
+	"gotest.tools/assert"
 )
 
 var (
 	SERVER_URL_BASE = "http://localhost:9049"
-	API_KEY         = "expectedAPIPassword"
+	TESTING_API_KEY = "expectedAPIPassword"
 )
 
 func TestMain(m *testing.M) {
-	setupProps()
+	setupAppConfig()
 	code := m.Run()
 	os.Exit(code)
 }
 
-func setupProps() {
-	os.Setenv("API_KEY", API_KEY)
+func setupAppConfig() {
+	appConfig := dtos.AppConfig{
+		APIPassword: TESTING_API_KEY,
+	}
+	SetConfig(appConfig)
+	util.SetConfig(appConfig)
 }
 
 func runTestWebServer(ctx context.Context) {
-	r := setupRouter()
+	r := SetupRouter()
 	srv := &http.Server{
 		Handler:      r,
 		Addr:         ":9049",
@@ -49,7 +55,7 @@ func TestGetAPIStatus(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	req.Header.Set("API_KEY", API_KEY)
+	req.Header.Set("API_KEY", TESTING_API_KEY)
 
 	res, err := client.Do(req)
 	if err != nil {
