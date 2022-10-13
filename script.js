@@ -6,11 +6,49 @@ let settingsPanelIsVisible = false;
 
 window.onload = function() {
     console.log("LOADED UP BAI")
+    giveSwayaaangBordersToSettingsButton()
+
+    initVariablesIfNotSet()
+
     checkStatus().then((res) => {
         setInterval(checkStatus, 10000)
     })
-    giveSwayaaangBordersToSettingsButton()
     fillInRecentTransactions()
+}
+
+function initVariablesIfNotSet() {
+    console.log("Init vars function")
+    getStorageVariable("transactions").then((transactions) => {
+        if (!Array.isArray(transactions)) {
+            transactions = []
+            browser.storage.local.set({
+                "transactions": transactions
+            }).then(() => {
+                console.log("Successfully set empty transactions")
+            }, (err) => {
+                console.error(`Failed to set empty transactions: ${err}`)
+            })
+        } else {
+            console.log("Transactions is already set")
+        }
+    }, (err) => {
+        console.error(`failed to get transactions: ${err}`)
+    })
+    getStorageVariable("backendURL").then((backendURL) => {
+        if (backendURL == "") {
+            browser.storage.local.set({
+                "backendURL": "empty"
+            }).then(() => {
+                console.log("Successfully set empty backendURL")
+            }, (err) => {
+                console.error(`Failed to set empty backendURL: ${err}`)
+            })
+        } else {
+            console.log("backendURL is already set")
+        }
+    }, (err) => {
+        console.error(`failed to get backendURL: ${err}`)
+    })
 }
 
 function giveSwayaaangBordersToSettingsButton() {
@@ -37,7 +75,10 @@ function swayaaangBorders(borderRadius) {
 
 function getMostRecentTransactions(numTransactions) {
     return new Promise((resolve, reject) => {
-        getStorageVariable("transactions").then((res) => {
+        getStorageVariable("transactions", []).then((res) => {
+            if (res == undefined) {
+                console.log("its undefined")
+            }
             if (res.length >= numTransactions) {
                 resolve(res.slice(numTransactions))
             } else {
@@ -197,10 +238,14 @@ function dateString(date) {
 
 function checkStatus() {
     return new Promise((resolve, reject) => {
-        getStorageVariable("backendURL").then((backendURL) => {
-            console.log(`getting status from ${backendURL}/status`)
-            fetch(`${backendURL}/status`, {
-                method: 'POST'
+        getBackendUrlAndApiKey().then((info) => {
+            console.log(`getting status from ${info.backendURL}/status`)
+            fetch(`${info.backendURL}/status`, {
+                method: 'POST',
+                mode: 'cors',
+                headers: {
+                    'API_KEY': info.apiKey
+                }
             })
             .then((res) => res.json())
             .then((data) => JSON.parse(data))
@@ -217,8 +262,8 @@ function checkStatus() {
                 reject()
             });
         }, (err) => {
-            console.log("failed to get backendURL")
-            reject()
+            console.error("failed to get backendURL and apikey")
+            reject(err)
         })
     })
 }
@@ -335,13 +380,13 @@ function settingsPanelButtonClicked() {
     }
 
     settingsPanelIsVisible = true
-    getStorageVariable("backendURL").then((backendURL) => {
+    getBackendUrlAndApiKey().then((info) => {
         document.getElementById("settingsPanel").innerHTML = `
         <div style="padding-top: 0; padding-bottom: 0; padding-left: 0.8vh; padding-right: 0.8vh">
             <hr style="padding: 0; margin: 0; margin-top: 0.4vh"/>
             <table style="text-align: center; width: 100%">
                 <tr>
-                    <td style="font-size: 4vh;">
+                    <td style="font-size: 0.8rem;">
                         Backend URL
                     </td>
                 </tr>
@@ -349,11 +394,27 @@ function settingsPanelButtonClicked() {
                     <td style="width: 100%">
                         <input 
                             type="text" id="backendURLInput"
-                            style="font-size: 4vh; background-color: #464646; border: 1px solid grey; color: white; width: 100%"
-                            value=${backendURL}
+                            style="font-size: 0.6rem; background-color: #464646; border: 1px solid grey; color: white; width: 100%"
+                            value=${info.backendURL === "empty" ? "" : info.backendURL}
                         >
                     </td>
                 </tr>
+
+                <tr>
+                    <td style="font-size: 0.8rem;">
+                        API Key
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width: 100%">
+                        <input 
+                            type="text" id="apiKeyInput"
+                            style="font-size: 0.6rem; background-color: #464646; border: 1px solid grey; color: white; width: 100%"
+                            value=${info.apiKey === "empty" ? "" : info.apiKey}
+                        >
+                    </td>
+                </tr>
+
                 <tr>
                     <td style="float: left">
                         <span>
@@ -371,24 +432,35 @@ function settingsPanelButtonClicked() {
         `
         document.getElementById("testBackendURL").addEventListener("click", (event) => {
             const newURLString = document.getElementById("backendURLInput").value;
+            const apiKey = document.getElementById("apiKeyInput").value;
             try {
                 const testURL = new URL(newURLString)
             } catch (_) {
                 document.getElementById("testBackendStatus").textContent = "Nope"
                 return
             }
-        
+            console.log(`curl ${newURLString}/status API_KEY: ${apiKey}`)
             fetch(`${newURLString}/status`, {
-                method: 'POST'
+                method: 'POST',
+                mode: 'cors',
+                headers: {
+                    'API_KEY': apiKey
+                }
             })
             .then((res) => res.json())
             .then((data) => JSON.parse(data))
             .then((data) => {
                 if (data.status == "operational") {
                     document.getElementById("testBackendStatus").textContent = "Working :)"
-                    setBackendURL(newURLString)
+                    setBackendURL(newURLString).then(() => {}, (err) => {
+                        console.error(`failed to set backendURL: ${err}`)
+                    })
+                    setApiKey(apiKey).then(() => {}, (err) => {
+                        console.error(`failed to set apiKey: ${err}`)
+                    })
                 } else {
                     console.log("invalid response")
+                    console.log(data)
                     document.getElementById("testBackendStatus").textContent = "Nope"
                 }
             }, (err) => {
@@ -400,13 +472,43 @@ function settingsPanelButtonClicked() {
 
 }
 
+function getBackendUrlAndApiKey() {
+    return new Promise((resolve, reject) => {
+        getStorageVariable("backendURL").then((backendURL) => {
+            getStorageVariable("apiKey").then((apiKey) => {
+                resolve({"backendURL": backendURL, "apiKey": apiKey})
+            }, (err) => {
+                reject(`failed to get apiKey: ${err}`)
+            })
+        }, (err) => {
+            reject(`failed to get backendURL: ${err}`)
+        })
+    })
+}
+
 function setBackendURL(URL) {
-    browser.storage.local.set({
-        "backendURL": URL
-    }).then((res) => {
-        console.log("Successfully set backend URL")
-    }, (err) => {
-        console.error(`Failed to set backend URL: ${err}`)
+    return new Promise((resolve, reject) => {
+        browser.storage.local.set({
+            "backendURL": URL
+        }).then((res) => {
+            console.log("Successfully set backend URL")
+            resolve()
+        }, (err) => {
+            reject(err)
+        })
+    })
+}
+
+function setApiKey(apiKey) {
+    return new Promise((resolve, reject) => {
+        browser.storage.local.set({
+            "apiKey": apiKey
+        }).then((res) => {
+            console.log("Successfully set apiKey")
+            resolve()
+        }, (err) => {
+            reject(err)
+        })
     })
 }
 
@@ -414,11 +516,10 @@ function getStorageVariable(variable) {
     return new Promise((resolve, reject) => {
         browser.storage.local.get(variable).then(
             (res) => {
-                console.log(`Retrieved: ${res[variable]} from get ${variable}`)
+                console.log(`Retrieved: ${res[variable]} (${typeof res}) from get ${variable}`)
                 resolve(res[variable])
             }, (err) => {
-                console.eror(`failed to get ${variable}`)
-                reject()
+                reject(err)
             }
         )
     })
