@@ -20,6 +20,15 @@
             input:focus {
                 outline: none;
             }
+            input::-webkit-outer-spin-button,
+            input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+                margin: 0;
+            }
+            input[type=number] {
+                -moz-appearance: textfield;
+            }
+
             #settingsButton {
                 background-color: #141314;
                 color: white;
@@ -48,7 +57,7 @@
 
             <div style="text-align: center; padding: 1vh">
                 <a href="" style="text-decoration: none; color: white" id="importTransactionsButton">
-                    <div style="font-weight: bold; font-size: 1rem; display: inline; border: 2px solid grey; padding: 0.2vh 2vh 0.2vh 2vh; border-top-right-radius: 3vh; border-bottom-left-radius: 3vh;">
+                    <div style="font-weight: bold; font-size: 1rem; display: inline; border: 2px solid grey; padding: 0.2vh 2vh 0.2vh 2vh; border-top-right-radius: 0.4rem; border-bottom-left-radius: 0.4rem;">
                         Import Transactions
                     </div>
                 </a>    
@@ -57,6 +66,29 @@
             <div style=" padding: 3vh; padding-top: 0; padding-bottom: 0">
                 <div id="requestStatusBox">
                     
+                </div>
+                <div style="text-align: center; margin-bottom: 0.0">
+                    <table>
+                        <tr>
+                            <td>
+                                <p>
+                                    for the last
+                                </p>
+                            </td>
+                            <td style="width: 2.5rem">
+                                <input 
+                                    type="number" id="daysInput"
+                                    style="font-size: 1rem; background-color: #464646; border: 1px solid grey; color: white; width: 100%"
+                                    value="0"
+                                >
+                            </td>
+                            <td>
+                                <p>
+                                    days
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
                 </div>
 
                 <div style="text-align: center; margin-bottom: 0.0">

@@ -4,12 +4,13 @@ const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
 let settingsPanelIsVisible = false;
 
 window.onload = function() {
-    giveSwayaaangBordersToSettingsButton()
+    giveSwayaaangBordersToItems()
     initVariablesIfNotSet()
 
     checkStatus().then((res) => {
         setInterval(checkStatus, 10000)
     })
+    fillInDaysInput()
     fillInRecentTransactions()
 }
 
@@ -29,7 +30,7 @@ function initVariablesIfNotSet() {
         console.error(`failed to get transactions: ${err}`)
     })
     getStorageVariable("backendURL").then((backendURL) => {
-        if (backendURL == "") {
+        if (backendURL == "" || backendURL === undefined) {
             browser.storage.local.set({
                 "backendURL": "empty"
             }).then(() => {
@@ -37,14 +38,17 @@ function initVariablesIfNotSet() {
             }, (err) => {
                 console.error(`Failed to set empty backendURL: ${err}`)
             })
+        } else {
+            console.log(`backendURL was not empty: ${backendURL}`)
         }
     }, (err) => {
         console.error(`failed to get backendURL: ${err}`)
     })
 }
 
-function giveSwayaaangBordersToSettingsButton() {
+function giveSwayaaangBordersToItems() {
     document.getElementById("settingsButton").style = swayaaangBorders(0.6)
+    // document.getElementById("importTransactions").style += swayaaangBorders(0.6)   
 }
 
 function swayaaangBorders(borderRadius) {
@@ -68,10 +72,9 @@ function swayaaangBorders(borderRadius) {
 function getMostRecentTransactions(numTransactions) {
     return new Promise((resolve, reject) => {
         getStorageVariable("transactions", []).then((res) => {
-            if (res == undefined) {
+            if (res === undefined) {
                 resolve([])
-            }
-            if (res.length >= numTransactions) {
+            } else if (res.length >= numTransactions) {
                 resolve(res.slice(numTransactions))
             } else {
                 resolve(res)
@@ -79,6 +82,18 @@ function getMostRecentTransactions(numTransactions) {
         }, (err) => {
             reject(err)
         })
+    })
+}
+
+function fillInDaysInput() {
+    getStorageVariable("daysInput", []).then((res) => {
+        if (res === undefined) {
+            document.getElementById("daysInput").value = "1"
+        } else {
+            document.getElementById("daysInput").value = res
+        }
+    }, (err) => {
+        console.error(`err getting daysInput:${err}`)
     })
 }
 
@@ -152,12 +167,12 @@ function fillInRecentTransactions() {
 
 document.getElementById("importTransactionsButton").addEventListener("click", function(e){
     e.preventDefault();
-    getBackendUrlAndApiKey().then((info) => {
+    getInfoForRequest().then((info) => {
         const backendURLObject = new URL(info.backendURL)
-        const ws = new WebSocket(`ws://${backendURLObject.host}/ws/transactions?days=12&apikey=${info.apiKey}`);
+        const ws = new WebSocket(`ws://${backendURLObject.host}/ws/transactions?days=${info.daysInput}&apikey=${info.apiKey}`);
 
         ws.onopen = function(e) {
-            createRequestStatusBox()
+            createRequestStatusBox() 
         };
 
         ws.onmessage = function(event) {
@@ -231,7 +246,10 @@ function dateString(date) {
 
 function checkStatus() {
     return new Promise((resolve, reject) => {
-        getBackendUrlAndApiKey().then((info) => {
+        getInfoForRequest().then((info) => {
+            if (info.backendURL === "empty") {
+                resolve()
+            }
             console.log(`getting status from ${info.backendURL}/status`)
             fetch(`${info.backendURL}/status`, {
                 method: 'POST',
@@ -361,6 +379,24 @@ function timeSince(date) {
     return Math.floor(seconds) + "s";
 }
 
+document.getElementById("daysInput").addEventListener("change", (ev) => {
+    const inputNum = parseInt(document.getElementById("daysInput").value)
+    console.log(inputNum)
+    if (Number.isInteger(parseInt(inputNum))) {
+        if (inputNum > 0 && inputNum < 365) {
+            browser.storage.local.set({
+                "daysInput": inputNum
+            }).then((res) => {
+                console.log("Successfully set daysInput")
+            }, (err) => {
+                console.error(`err setting daysInput: ${err}`)
+            })
+        }
+    } else {
+        console.log("is not in range")
+    }
+})
+
 document.getElementById("settingsButton").addEventListener("click", (event) => {
     settingsPanelButtonClicked()
 });
@@ -373,7 +409,7 @@ function settingsPanelButtonClicked() {
     }
 
     settingsPanelIsVisible = true
-    getBackendUrlAndApiKey().then((info) => {
+    getInfoForRequest().then((info) => {
         document.getElementById("settingsPanel").innerHTML = `
         <div style="padding-top: 0; padding-bottom: 0; padding-left: 0.8vh; padding-right: 0.8vh">
             <hr style="padding: 0; margin: 0; margin-top: 0.4vh"/>
@@ -465,11 +501,15 @@ function settingsPanelButtonClicked() {
 
 }
 
-function getBackendUrlAndApiKey() {
+function getInfoForRequest() {
     return new Promise((resolve, reject) => {
         getStorageVariable("backendURL").then((backendURL) => {
             getStorageVariable("apiKey").then((apiKey) => {
-                resolve({"backendURL": backendURL, "apiKey": apiKey})
+                getStorageVariable("daysInput").then((daysInput) => {
+                    resolve({"backendURL": backendURL, "apiKey": apiKey, "daysInput": daysInput})
+                }, (err) => {
+                    reject(`failed to get daysInput: ${err}`)
+                })
             }, (err) => {
                 reject(`failed to get apiKey: ${err}`)
             })
@@ -509,7 +549,7 @@ function getStorageVariable(variable) {
     return new Promise((resolve, reject) => {
         browser.storage.local.get(variable).then(
             (res) => {
-                console.log(`Retrieved: ${res[variable]} (${typeof res}) from get ${variable}`)
+                console.log(`Retrieved: '${res[variable]}' type: ${typeof res} from get '${variable}'`)
                 resolve(res[variable])
             }, (err) => {
                 reject(err)
