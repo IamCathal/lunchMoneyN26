@@ -1,6 +1,8 @@
 # lunchMoneyN26
 Import and filter transaction data directly from [N26](https://n26.com) account into [lunch money](https://lunchmoney.app/). (100% experimental at the moment but security is my number one priority)
 
+![](https://i.imgur.com/5ddj6ZI.png)
+
 ## Usage
 ```
   -d int
